@@ -57,12 +57,12 @@ Each subtopic has two ideas, and every idea runs the same loop, taken from the h
 
 1. **Explain it** in your own words. Not scored. The model labels the explanation *own reasoning*, *recited*, *wrong* or *unclear*, and quotes the sentence that shows it. "Make it simpler" shows a gentler version of the prompt, written in advance. A pasted answer is recorded.
 2. **Case A**: a new situation with one short answer written in advance. Code checks it against the case's accept and reject words.
-3. If case A is wrong, or the explanation was recited or wrong: **one follow-up** aimed at the quoted sentence, then **case B**, a different situation chosen so the common wrong idea gets it wrong.
+3. If case A is wrong, or the explanation was recited, wrong, or still unclear after the simpler re-ask: **one follow-up** aimed at the quoted sentence, then **case B**, a different situation chosen so the common wrong idea gets it wrong.
 
 | Explanation | Case A | Case B | Points |
 |---|---|---|---|
 | Own reasoning | right | (not asked) | 1 |
-| Recited | right | right / wrong | 1 / 0.5 |
+| Recited, or still unclear after the re-ask | right | right / wrong | 1 / 0.5 |
 | Any | wrong | right / wrong | 0.5 / 0 |
 | Wrong | right (by luck, so it doesn't count) | right / wrong | 0.5 / 0 |
 

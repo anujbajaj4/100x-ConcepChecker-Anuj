@@ -393,7 +393,10 @@ def respond(s, message, simpler=False, pasted=False):
     if s["stage"] == "case_a":
         right, how = check(case_a, message)
         s["a"] = {"answer": message, "right": right, "checked_by": how, "pasted": pasted}
-        if right and s["label"] in ("own", "unclear"):
+        # Only an explanation in their own words lets a right case A stand alone. One that's
+        # still unclear after the simpler re-ask gets the follow-up and case B, like a recited one:
+        # otherwise "I dont know" plus a lucky guess would earn a full point.
+        if right and s["label"] == "own":
             card = {"kind": "passed", "heading": "You understood it and applied it." + points_phrase(s, 1), "text": "That's the idea working on a case you hadn't seen."}
             return settle(s, 1, card)
         s["follow_up"] = write_follow_up(idea, s)
@@ -404,6 +407,9 @@ def respond(s, message, simpler=False, pasted=False):
         elif s["label"] == "wrong":
             heading = "You got the case. Let's test the reason you gave." if right else "Not quite. Let's test one sentence you wrote."
             text = "Take the underlined part:"
+        elif right:
+            heading = "Right answer. Now let's put the reason into words."
+            text = "Your explanation didn't say why yet. Think about this:"
         else:
             heading = "Not quite. Let's work it out a step at a time."
             text = "Think about this:"
@@ -421,7 +427,9 @@ def respond(s, message, simpler=False, pasted=False):
     a_counts = s["a"]["right"] and s["label"] != "wrong"
     if right:
         points = 1 if a_counts else 0.5
-        if a_counts:
+        if a_counts and s["label"] == "unclear":
+            card = {"kind": "passed", "heading": "Now you've put the reason into words." + points_phrase(s, points), "text": "You worked out why, then got a second new case right."}
+        elif a_counts:
             card = {"kind": "passed", "heading": "Now you can explain it, not just recite it." + points_phrase(s, points), "text": "You turned the underlined phrase into a real reason."}
         else:
             card = {"kind": "half", "heading": "You worked it out." + points_phrase(s, points), "text": f"That's a case you hadn't seen. For the first case, the answer was: {case_a['answer']}."}
