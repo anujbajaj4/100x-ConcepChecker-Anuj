@@ -4,18 +4,28 @@ Concept Check finds where a learner stops understanding and starts reciting. Pic
 
 ## Run it
 
-```bash
-pip install -r requirements.txt
-export GROQ_API_KEY=gsk_your_key_here
-uvicorn api.index:app --reload
-```
+1. Install the packages once:
 
-Then open http://127.0.0.1:8000, pick a subtopic and press Start test.
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. Copy `.env.example` to `.env` and paste your Groq key after `GROQ_API_KEY=`. `.env` never goes to GitHub.
+
+3. Start everything:
+
+   ```bash
+   python app.py
+   ```
+
+4. Open http://127.0.0.1:8000, pick a subtopic and press Start test. Press Ctrl+C in the terminal to stop.
+
+`python app.py` starts one server that serves both the page and the API, the same way `08-supabase-api` does in the c8-db repo. Inside, it uses uvicorn, the program that turns the FastAPI app into a running web server, and restarts it whenever you save a file.
 
 ## The two interfaces
 
 - `public/index.html` is the page: a dropdown, a chat log, a text box, a button and one `fetch` to `/api/chat`. It holds no key.
-- `api/index.py` is the server. `GET /api/subtopics` lists the subtopics. `POST /api/chat` takes `{"session_id", "subtopic", "message"}` and returns `{"messages", "state"}`: the reply cards to show, and the quiz state the sidebar draws (results so far, score, current question, notes link). Pydantic rejects any other package with a 422. The Groq key lives only here, in an environment variable.
+- `app.py` is the server. `GET /api/subtopics` lists the subtopics. `POST /api/chat` takes `{"session_id", "subtopic", "message"}` and returns `{"messages", "state"}`: the reply cards to show, and the quiz state the sidebar draws (results so far, score, current question, notes link). Pydantic rejects any other package with a 422. The Groq key lives only here, read from `.env` locally and from Vercel's environment variables in production.
 
 | Dial | `POST /api/chat` |
 |---|---|
@@ -45,7 +55,8 @@ The model never decides on its own that a learner understands. The answer key is
 ## Files
 
 - `public/index.html`: the chat page.
-- `api/index.py`: the FastAPI routes, the Groq call and the scoring.
+- `app.py`: the FastAPI routes, the Groq call and the scoring. Run it with `python app.py`.
+- `.env.example`: the variable names to copy into your own `.env`.
 - `prompts.py`: the grader, follow-up and explanation prompts.
 - `golden_pairs.json`: 54 questions with key points and pass rules across 12 subtopics.
 

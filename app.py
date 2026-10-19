@@ -1,17 +1,21 @@
 import json
 import os
-import sys
 from pathlib import Path
 
 import requests
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-# The project root holds prompts.py, golden_pairs.json and public/.
-ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT))
 from prompts import EXPLAIN_PROMPT, FOLLOW_UP_PROMPT, GRADER_PROMPT
+
+# This folder holds prompts.py, golden_pairs.json, public/ and your .env.
+ROOT = Path(__file__).resolve().parent
+
+# Read GROQ_API_KEY from .env, so there is nothing to export in the terminal.
+# On Vercel there is no .env; the key comes from the project's environment variables.
+load_dotenv(ROOT / ".env")
 
 PAIRS = json.load(open(ROOT / "golden_pairs.json"))["pairs"]
 SUBTOPICS = list(dict.fromkeys(p["subtopic"] for p in PAIRS))
@@ -44,9 +48,12 @@ SESSIONS = {}
 
 
 def ask_groq(system, user):
+    key = os.environ.get("GROQ_API_KEY", "")
+    if not key or key == "paste_your_key_here":
+        raise HTTPException(500, "GROQ_API_KEY is missing. Paste your key into the .env file, then restart python app.py.")
     r = requests.post(
         "https://api.groq.com/openai/v1/chat/completions",
-        headers={"Authorization": "Bearer " + os.environ["GROQ_API_KEY"]},
+        headers={"Authorization": "Bearer " + key},
         json={
             "model": "openai/gpt-oss-120b",
             "messages": [
@@ -269,6 +276,19 @@ def chat_route(body: ChatIn):
     return {"messages": messages, "state": state(s)}
 
 
-# Locally, serve the page too. On Vercel, public/ is served on its own.
-if (ROOT / "public").exists():
-    app.mount("/", StaticFiles(directory=ROOT / "public", html=True), name="public")
+# Locally, serve the page from this same server, so the page and the API share
+# one address, exactly like on Vercel. On Vercel, its CDN serves public/ itself.
+# This mount comes last so the /api routes above are matched first.
+PUBLIC = ROOT / "public"
+if PUBLIC.is_dir():
+    app.mount("/", StaticFiles(directory=PUBLIC, html=True), name="public")
+
+
+# python app.py starts everything: the API and the page, at http://127.0.0.1:8000
+# uvicorn is the program that turns the FastAPI app above into a running web server.
+# reload=True restarts it whenever you save a file.
+if __name__ == "__main__":
+    import uvicorn
+
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("app:app", app_dir=str(ROOT), port=port, reload=True, reload_dirs=[str(ROOT)])

@@ -1,5 +1,5 @@
 .env
+.vercel
 .venv/
 __pycache__/
-.gradio/
 .DS_Store
