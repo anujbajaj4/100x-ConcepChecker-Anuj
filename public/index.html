@@ -49,6 +49,7 @@
   .picker h2 { margin: 0; font-size: 24px; line-height: 1.2; letter-spacing: -0.02em; }
   .picker p { margin: 0; color: var(--text); }
   .field { display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600; }
+  .guest-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding-top: 16px; border-top: 1px solid var(--line); }
   .field input { min-height: 44px; border: 1.5px solid var(--ink); border-radius: 8px; background: var(--card); padding: 0 12px; font-weight: 400; }
 
   /* Home: the map */
@@ -263,6 +264,10 @@
       <button class="btn" type="button" id="signup">Create account</button>
     </div>
     <p class="small">New here? Enter your email and a password of at least 6 characters, then press Create account.</p>
+    <div class="guest-row">
+      <button class="btn" type="button" id="guest" formnovalidate>Continue as guest</button>
+      <span class="small">Try it with no account. Nothing you type is saved.</span>
+    </div>
   </form>
 </section>
 

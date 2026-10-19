@@ -38,7 +38,7 @@ The project is linked to Vercel as `concept-check-anuj`, with the FastAPI preset
 ## The two interfaces
 
 - `public/index.html` is the page: a log-in screen, the mind map home, and the chat test. It holds no key, only the learner's own login token.
-- `app.py` is the server. `POST /api/signup` and `POST /api/login` go through Supabase Auth and return a token. `GET /api/home` returns every topic and subtopic with the learner's latest and best real-world score and how often they've practised it. `POST /api/chat` takes `{"test_id", "subtopic", "mode", "message", "simpler", "pasted"}` and returns `{"messages", "state"}`: the reply cards to show, and the state the sidebar draws. Pydantic rejects any other package with a 400. The Groq key lives only here, read from `.env` locally and from Vercel's environment variables in production.
+- `app.py` is the server. `POST /api/signup` and `POST /api/login` go through Supabase Auth and return a token. `GET /api/guest/home` and `POST /api/guest/chat` let a guest try it with no account: nothing reaches Supabase, the test's state travels with each message and is validated strictly, and guests are rate-limited by IP. `GET /api/home` returns every topic and subtopic with the learner's latest and best real-world score and how often they've practised it. `POST /api/chat` takes `{"test_id", "subtopic", "mode", "message", "simpler", "pasted"}` and returns `{"messages", "state"}`: the reply cards to show, and the state the sidebar draws. Pydantic rejects any other package with a 400. The Groq key lives only here, read from `.env` locally and from Vercel's environment variables in production.
 
 | Dial | `POST /api/chat` |
 |---|---|

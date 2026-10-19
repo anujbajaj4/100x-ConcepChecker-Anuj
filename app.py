@@ -657,7 +657,10 @@ def home_route(request: Request):
             mine["latest"] = round(row["score"])
             mine["best"] = max(mine["best"] or 0, round(row["score"]))
             mine["tests"] += 1
+    return {"title": ROOT_TITLE, "email": user.get("email"), "topics": map_topics(scores)}
 
+
+def map_topics(scores):
     topics = []
     for subtopic in SUBTOPICS:
         items = ideas_for(subtopic)
@@ -669,7 +672,88 @@ def home_route(request: Request):
             "notes_url": NOTES.get(subtopic, ""),
             **scores.get(subtopic, {"latest": None, "best": None, "tests": 0, "practised": 0}),
         })
-    return {"title": ROOT_TITLE, "email": user.get("email"), "topics": topics}
+    return topics
+
+
+# --- Guests -------------------------------------------------------------------------
+# A guest tries the app with no account. Nothing is written to Supabase: the test's
+# state travels to the page and back with every message instead. The page can't be
+# trusted, so the state is checked as strictly as any other package before it's used,
+# and guests are rate-limited by IP address, since they reach the AI without logging in.
+class CaseResult(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    answer: str = Field(max_length=2000)
+    right: bool
+    checked_by: Literal["code", "model"]
+    pasted: bool = False
+
+
+class GuestState(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    subtopic: str = Field(max_length=100)
+    mode: Literal["practice", "real"]
+    index: int = Field(ge=0, le=10)
+    score: float = Field(ge=0, le=10)
+    results: list[Literal[0, 0.5, 1]] = Field(max_length=10)
+    waiting: bool
+    stage: Literal["explain", "case_a", "follow_up", "case_b", "done"]
+    explanation: str = Field(max_length=6000)
+    label: Literal["own", "recited", "wrong", "unclear"] | None = None
+    quote: str | None = Field(default=None, max_length=2000)
+    simpler_used: bool
+    asked_again: bool
+    pasted: bool
+    a: CaseResult | None = None
+    follow_up: str | None = Field(default=None, max_length=1000)
+    reply: str | None = Field(default=None, max_length=2000)
+    b: CaseResult | None = None
+
+
+class GuestChatIn(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    state: GuestState | None = None                       # none yet means "start one"
+    subtopic: str = Field(max_length=100)
+    mode: Literal["practice", "real"] = "practice"
+    message: str = Field(min_length=1, max_length=2000)
+    simpler: bool = False
+    pasted: bool = False
+
+
+GUEST_NOTE = "You're a guest, so nothing here is saved. Sign up to keep your scores on the map."
+
+
+@app.get("/api/guest/home")
+def guest_home_route(request: Request):
+    limit("guest-pages:" + client_ip(request), PAGES_PER_MINUTE, 60)
+    return {"title": ROOT_TITLE, "email": None, "guest": True, "topics": map_topics({})}
+
+
+@app.post("/api/guest/chat")
+def guest_chat_route(body: GuestChatIn, request: Request):
+    limit("guest:" + client_ip(request), ANSWERS_PER_MINUTE, 60)  # 429 here if they're sending too fast
+
+    if body.state is None:
+        if body.subtopic not in SUBTOPICS:
+            raise HTTPException(400, "Unknown subtopic: " + body.subtopic)
+        s = new_test(body.subtopic, body.mode)
+        first = intro(s)
+        first["text"] += " " + GUEST_NOTE
+        return {"guest_state": stored(s), "messages": [first, explain_card(s)], "state": state(s)}
+
+    s = body.state.model_dump()
+    if s["subtopic"] not in SUBTOPICS:
+        raise HTTPException(400, "Unknown subtopic: " + s["subtopic"])
+    s["items"] = ideas_for(s["subtopic"])
+    s["new_attempts"] = []
+    # The state must describe a real place in this set, or the flow could run off the end.
+    if s["index"] > len(s["items"]) or (s["stage"] != "done" and s["index"] >= len(s["items"])):
+        raise HTTPException(400, "That test can't be continued. Start it again from the map.")
+
+    messages = respond(s, body.message, simpler=body.simpler, pasted=body.pasted)
+    for m in messages:
+        if m["kind"] == "done" and m["mode"] == "real":
+            m["text"] = "That's your real-world score. As a guest it isn't saved: sign up to keep it on the map."
+    return {"guest_state": stored(s), "messages": messages, "state": state(s)}
 
 
 # Locally, serve the page from this same server, so the page and the API share

@@ -31,6 +31,9 @@ const statusOf = (score) => score == null ? "untested" : score >= 80 ? "mastered
 // never read it, so a malicious script injected here couldn't steal it either.
 // Nothing about you is saved in this browser's storage.
 let email = null;
+// A guest tries the app with no account. Their test's state lives in this variable and
+// goes to the server with each message; nothing is saved anywhere, and a refresh ends it.
+let guest = false, guestState = null;
 
 // Earlier versions kept the token in localStorage. Wipe any copy left behind.
 try { localStorage.removeItem("token"); localStorage.removeItem("email"); } catch {}
@@ -76,7 +79,17 @@ function loggedOut(detail) {
 
 $("login-form").onsubmit = (e) => { e.preventDefault(); logIn("/api/login"); };
 $("signup").onclick = () => { if ($("login-form").reportValidity()) logIn("/api/signup"); };
-$("logout").onclick = () => logOut();
+// For a guest this button reads "Sign up to save" and goes to the log-in screen.
+$("logout").onclick = () => {
+  if (!guest) return logOut();
+  guest = false; guestState = null; home = null; firstDraw = true;
+  showLogin("");
+};
+$("guest").onclick = () => {
+  guest = true; guestState = null; home = null; firstDraw = true;
+  $("login-error").hidden = true;
+  loadHome();
+};
 
 // --- Views ---
 function showView(name) {
@@ -86,7 +99,8 @@ function showView(name) {
   $("head-right").hidden = name !== "test";
   $("progress").hidden = name !== "home";
   $("account").hidden = name === "login";
-  $("who").textContent = email || "";
+  $("who").textContent = guest ? "Guest" : email || "";
+  $("logout").textContent = guest ? "Sign up to save" : "Log out";
   $("topic").hidden = name !== "test";
   if (name !== "test") $("title").textContent = "Concept Check";
 }
@@ -117,7 +131,7 @@ let firstDraw = true;     // play the drawing animation only once per visit
 async function loadHome() {
   $("home-status").textContent = home ? "" : "Loading your map…";
   try {
-    const r = await fetch("/api/home");
+    const r = await fetch(guest ? "/api/guest/home" : "/api/home");
     const data = await r.json();
     if (r.status === 401) return loggedOut(data.detail);
     if (!r.ok) throw new Error(r.status + ": " + (data.detail || "Something went wrong"));
@@ -125,7 +139,7 @@ async function loadHome() {
     home = data;
     showView("home");
     email = data.email;
-    $("who").textContent = email;
+    $("who").textContent = guest ? "Guest" : email;
     $("home-status").textContent = "";
     drawHome(previous);
   } catch (e) {
@@ -187,7 +201,10 @@ function drawSuggest() {
   const tested = subs.filter((s) => s.latest != null && s.latest < 80).sort((a, b) => a.latest - b.latest);
   const fresh = subs.find((s) => s.latest == null);
   let pick, text;
-  if (tested.length) {
+  if (guest) {
+    pick = subs.find((s) => s.title === "Anatomy of an API Request") || subs.at(0);
+    text = `You're exploring as a guest, so nothing is saved. Try <strong>${escape(pick.title)}</strong>: explain it in your own words, then test it on a new case.`;
+  } else if (tested.length) {
     pick = tested[0];
     text = `Your weakest set is <strong>${escape(pick.title)}</strong> at ${pick.latest}%. One more go could move it up.`;
   } else if (fresh) {
@@ -402,6 +419,7 @@ function start(name, segment) {
   subtopic = name;
   mode = segment;
   testId = null;
+  guestState = null;
   log.innerHTML = "";
   showView("test");
   $("title").textContent = name;
@@ -417,10 +435,13 @@ async function talk(text, show = true, simpler = false) {
   pasted = false;
   send.disabled = true;
   try {
-    const r = await fetch("/api/chat", {
+    // A guest's request carries their test's state; a learner's carries the test id.
+    const r = await fetch(guest ? "/api/guest/chat" : "/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ test_id: testId, subtopic: subtopic, mode: mode, message: text, simpler: simpler, pasted: sentPasted }),
+      body: JSON.stringify(guest
+        ? { state: guestState, subtopic: subtopic, mode: mode, message: text, simpler: simpler, pasted: sentPasted }
+        : { test_id: testId, subtopic: subtopic, mode: mode, message: text, simpler: simpler, pasted: sentPasted }),
     });
     const data = await r.json();
     waiting.remove();
@@ -431,7 +452,8 @@ async function talk(text, show = true, simpler = false) {
     if (!r.ok) {
       addRow('<p class="error">' + escape(r.status + ": " + (data.detail || "Something went wrong")) + "</p>");
     } else {
-      testId = data.test_id;
+      if (guest) guestState = data.guest_state;
+      else testId = data.test_id;
       data.messages.forEach(addBot);
       drawState(data.state);
       scrollDown();
