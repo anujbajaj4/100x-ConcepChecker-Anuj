@@ -124,6 +124,9 @@
   .tree .detail { border: 1.5px solid var(--ink); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
   .tree .detail .x { display: none; }
 
+  /* The box that zooms between a subtopic's node and its test. */
+  .zoom { position: fixed; z-index: 20; pointer-events: none; overflow: hidden; background: var(--ground); border: 1px solid var(--line-strong); border-radius: 0; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600; white-space: nowrap; }
+
   .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); max-width: calc(100% - 32px); padding: 12px 18px; border-radius: 10px; background: var(--ink); color: #fff; font-size: 15px; box-shadow: 0 10px 30px rgba(30, 43, 69, 0.3); z-index: 10; }
 
   /* The one orchestrated moment: on first load, the map draws itself from the root outwards. */
@@ -196,6 +199,14 @@
   .box textarea { flex: 1; min-width: 0; border: none; resize: none; background: transparent; font-size: 16px; line-height: 1.5; padding: 4px 0; outline-offset: 6px; }
   .send { flex: none; width: 44px; height: 44px; border: none; border-radius: 8px; background: var(--ink); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; }
   .send:disabled { opacity: 0.5; cursor: wait; }
+  .mic { flex: none; width: 44px; height: 44px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--card); color: var(--ink); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .mic:hover { border-color: var(--ink); }
+  .mic[aria-pressed="true"] { background: var(--red); border-color: var(--red); color: #fff; }
+  .mic:disabled { opacity: 0.5; cursor: wait; }
+  @media (prefers-reduced-motion: no-preference) {
+    .mic[aria-pressed="true"] { animation: listen 1.2s ease-in-out infinite; }
+    @keyframes listen { 50% { box-shadow: 0 0 0 6px var(--red-tint); } }
+  }
 
   /* Narrow screens: views stack and the page scrolls. */
   @media (max-width: 860px) {
@@ -329,11 +340,14 @@
       <label for="message">Your answer</label>
       <div class="box">
         <textarea id="message" rows="2" placeholder="Explain it the way you'd tell a classmate"></textarea>
+        <button class="mic" id="mic" type="button" aria-label="Answer out loud" aria-pressed="false" hidden>
+          <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><rect x="7" y="2.5" width="6" height="10" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M4.5 9.5 A5.5 5.5 0 0 0 15.5 9.5 M10 15 V17.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
         <button class="send" id="send" type="submit" aria-label="Send answer">
           <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 16 V4 M5 9 L10 4 L15 9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
       </div>
-      <p class="small">Your own words count more than the textbook ones. Enter sends, Shift+Enter adds a line.</p>
+      <p class="small" id="hint">Your own words count more than the textbook ones. Enter sends, Shift+Enter adds a line.</p>
     </form>
   </main>
 </div>

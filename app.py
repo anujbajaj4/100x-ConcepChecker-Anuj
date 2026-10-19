@@ -10,6 +10,7 @@ from typing import Literal
 import requests
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi.concurrency import run_in_threadpool
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -471,6 +472,7 @@ def current_user(request):
 LOGINS_PER_MINUTE = 10    # per IP address, against password guessing
 ANSWERS_PER_MINUTE = 15   # per learner, each answer can mean up to three Groq calls
 PAGES_PER_MINUTE = 60     # per learner, for the map
+VOICE_PER_MINUTE = 10     # per IP address, each one is a speech-to-text call
 WINDOWS = defaultdict(deque)
 
 
@@ -528,7 +530,7 @@ SECURITY_HEADERS = {
     "X-Content-Type-Options": "nosniff",                                 # a file is what it says it is
     "X-Frame-Options": "DENY",                                           # older browsers' frame-ancestors
     "Referrer-Policy": "strict-origin-when-cross-origin",               # don't leak page paths to other sites
-    "Permissions-Policy": "camera=(), microphone=(), geolocation=()",   # this app needs none of them
+    "Permissions-Policy": "camera=(), microphone=(self), geolocation=()",   # the mic only for our own page, for voice answers
 }
 
 
@@ -754,6 +756,53 @@ def guest_chat_route(body: GuestChatIn, request: Request):
         if m["kind"] == "done" and m["mode"] == "real":
             m["text"] = "That's your real-world score. As a guest it isn't saved: sign up to keep it on the map."
     return {"guest_state": stored(s), "messages": messages, "state": state(s)}
+
+
+# --- Voice answers ---------------------------------------------------------------------
+# The page records the learner speaking and sends the audio here. We pass it to Groq's
+# speech-to-text with our key and send back only the words. The words go into the answer
+# box, so the learner can read and fix them before sending: the transcript is never
+# graded on its own. Guests can use it too, so the limit is per IP address.
+VOICE_TYPES = {"audio/webm": "webm", "audio/ogg": "ogg", "audio/mp4": "mp4", "audio/mpeg": "mp3", "audio/wav": "wav", "audio/x-m4a": "m4a"}
+VOICE_MAX_BYTES = 2_000_000   # about two minutes of speech; Vercel turns away anything over 4.5 MB anyway
+
+
+def transcribe(audio, kind):
+    key = os.environ.get("GROQ_API_KEY", "")
+    if not key or key == "paste_your_key_here":
+        raise HTTPException(500, "GROQ_API_KEY is missing. Paste your key into the .env file, then restart python3 app.py.")
+    r = requests.post(
+        "https://api.groq.com/openai/v1/audio/transcriptions",
+        headers={"Authorization": "Bearer " + key},
+        files={"file": ("answer." + VOICE_TYPES[kind], audio, kind)},
+        data={"model": "whisper-large-v3-turbo", "language": "en", "response_format": "json", "temperature": "0"},
+        timeout=60,
+    )
+    if r.status_code == 429:
+        wait = r.headers.get("retry-after", "30")
+        raise HTTPException(429, f"Voice is handling too many requests right now. Try again in {wait} seconds, or type your answer.", headers={"Retry-After": wait})
+    if r.status_code != 200:
+        print("Groq speech error", r.status_code, r.text[:300])
+        raise HTTPException(502, f"The speech service replied {r.status_code}. Try again, or type your answer.")
+    return r.json().get("text", "").strip()
+
+
+@app.post("/api/transcribe")
+async def transcribe_route(request: Request):
+    limit("voice:" + client_ip(request), VOICE_PER_MINUTE, 60)
+    kind = request.headers.get("content-type", "").split(";")[0].strip().lower()
+    if kind not in VOICE_TYPES:
+        raise HTTPException(400, "Send the recording as audio: webm, ogg, mp4, mp3, wav or m4a.")
+    size = request.headers.get("content-length", "")
+    if size.isdigit() and int(size) > VOICE_MAX_BYTES:
+        raise HTTPException(413, "That recording is too long. Keep it under two minutes.")
+    audio = await request.body()
+    if len(audio) > VOICE_MAX_BYTES:
+        raise HTTPException(413, "That recording is too long. Keep it under two minutes.")
+    if len(audio) < 1000:
+        raise HTTPException(400, "That recording was empty. Hold the mic a little longer.")
+    # requests blocks while Groq works, so run it off the event loop.
+    return {"text": await run_in_threadpool(transcribe, audio, kind)}
 
 
 # Locally, serve the page from this same server, so the page and the API share

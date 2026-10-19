@@ -102,7 +102,7 @@ function showView(name) {
   $("who").textContent = guest ? "Guest" : email || "";
   $("logout").textContent = guest ? "Sign up to save" : "Log out";
   $("topic").hidden = name !== "test";
-  if (name !== "test") $("title").textContent = "Concept Check";
+  if (name !== "test") { $("title").textContent = "Concept Check"; stopVoice(true); }
 }
 
 function showLogin(reason) {
@@ -111,9 +111,96 @@ function showLogin(reason) {
   $("login-error").hidden = !reason;
 }
 
-function showHome() {
+// Leaving a test zooms back out into the map, onto the subtopic you just did.
+async function showHome() {
+  const from = !$("test").hidden && subtopic;
+  const cover = from ? zoomCover() : null;
   showView("home");
-  loadHome();
+  returning = !!from;
+  await loadHome();
+  returning = false;
+  if (cover) zoomOut(cover, from);
+}
+
+// --- Zoom between the map and a test ---
+// One plain box grows from the subtopic's node to fill the screen, the test appears
+// under it, and the box fades. Going back runs the same box in reverse.
+const ZOOM_MS = 460;
+const calm = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+let returning = false;  // true while the map redraws behind a zoom-out
+
+// The copy of a subtopic's node that's on screen now: the map on wide screens, the list on phones.
+function nodeOnScreen(title) {
+  const s = subs.find((x) => x.title === title);
+  if (!s) return null;
+  return [...document.querySelectorAll('.sub[data-i="' + s.i + '"]')].find((el) => {
+    if (!el.offsetParent) return false;
+    const r = el.getBoundingClientRect();
+    return r.bottom > 0 && r.top < innerHeight;
+  }) || null;
+}
+
+function fullRect() {
+  const top = document.querySelector(".top").getBoundingClientRect().bottom;
+  return { left: 0, top: top, width: innerWidth, height: innerHeight - top };
+}
+
+// Where the map should scale from: the node's centre, measured inside the map's own box.
+function origin(map, r) {
+  const m = map.getBoundingClientRect();
+  return (r.left - m.left + r.width / 2) + "px " + (r.top - m.top + r.height / 2) + "px";
+}
+
+function box(r) {
+  return { left: r.left + "px", top: r.top + "px", width: r.width + "px", height: r.height + "px" };
+}
+
+function zoomCover(label) {
+  const el = document.createElement("div");
+  el.className = "zoom";
+  el.setAttribute("aria-hidden", "true");
+  el.innerHTML = "<span>" + escape(label || "") + "</span>";
+  Object.assign(el.style, box(fullRect()));
+  document.body.append(el);
+  return el;
+}
+
+function zoomIn(fromEl, title, then) {
+  const node = nodeOnScreen(title) || fromEl;
+  if (calm() || !node) return then();
+  const r = node.getBoundingClientRect();
+  const s = subs.find((x) => x.title === title);
+  const el = zoomCover(title);
+  el.style.background = s && s.status !== "untested" ? STATUS[s.status].tint : "var(--card)";
+  const map = $("home");
+  map.style.transformOrigin = origin(map, r);
+  map.animate([{ transform: "scale(1)", opacity: 1 }, { transform: "scale(1.06)", opacity: 0.2 }], { duration: ZOOM_MS, easing: "ease-in" });
+  el.animate([{ ...box(r), borderRadius: "8px" }, { ...box(fullRect()), borderRadius: "0px", background: "var(--ground)" }], { duration: ZOOM_MS, easing: "cubic-bezier(0.5, 0, 0.2, 1)", fill: "forwards" });
+  el.firstChild.animate([{ opacity: 1 }, { opacity: 0 }], { duration: ZOOM_MS * 0.6, fill: "forwards" });
+  setTimeout(() => {
+    then();
+    el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 220, fill: "forwards" }).onfinish = () => el.remove();
+  }, ZOOM_MS);
+}
+
+function zoomOut(el, title) {
+  let node = nodeOnScreen(title);
+  if (!node) {
+    const s = subs.find((x) => x.title === title);
+    const any = s && [...document.querySelectorAll('.sub[data-i="' + s.i + '"]')].find((x) => x.offsetParent);
+    any?.scrollIntoView({ block: "center" });
+    node = nodeOnScreen(title);
+  }
+  if (calm() || !node) return el.remove();
+  const r = node.getBoundingClientRect();
+  const s = subs.find((x) => x.title === title);
+  const map = $("home");
+  map.style.transformOrigin = origin(map, r);
+  map.animate([{ transform: "scale(1.06)", opacity: 0.2 }, { transform: "scale(1)", opacity: 1 }], { duration: ZOOM_MS, easing: "ease-out" });
+  el.animate([{ ...box(fullRect()), borderRadius: "0px", background: "var(--ground)", opacity: 1 },
+    { opacity: 1, offset: 0.7 },
+    { ...box(r), borderRadius: "8px", background: s && s.status !== "untested" ? STATUS[s.status].tint : "var(--card)", opacity: 0 }],
+    { duration: ZOOM_MS, easing: "cubic-bezier(0.5, 0, 0.2, 1)", fill: "forwards" }).onfinish = () => el.remove();
 }
 
 // --- Home: the mind map ---
@@ -186,7 +273,7 @@ function drawHome(previous) {
       el.querySelector(".fill").style.width = (s.latest || 0) + "%";
       if (s.before !== s.latest) el.classList.add("updated");
     });
-  }, firstDraw ? 500 : 60);
+  }, firstDraw ? 500 : returning ? ZOOM_MS + 80 : 60);
   firstDraw = false;
 }
 
@@ -368,7 +455,10 @@ $("home").addEventListener("click", (e) => {
   const act = e.target.closest("[data-act]");
   if (act) {
     if (act.dataset.act === "close") return closePop();
-    if (act.dataset.act === "practice" || act.dataset.act === "real") return start(subs[act.dataset.i].title, act.dataset.act);
+    if (act.dataset.act === "practice" || act.dataset.act === "real") {
+      const title = subs[act.dataset.i].title;
+      return zoomIn(act, title, () => start(title, act.dataset.act));
+    }
     if (act.dataset.act === "show") {
       select(+act.dataset.i);
       // Scroll to whichever copy is on screen: the map on wide screens, the list on phones.
@@ -578,8 +668,9 @@ $("back").onclick = (e) => { e.preventDefault(); showHome(); };
 $("form").onsubmit = (e) => {
   e.preventDefault();
   const text = message.value.trim();
-  if (!text || send.disabled) return;
+  if (!text || send.disabled || recorder) return;
   message.value = "";
+  hint.textContent = HINT;
   talk(text);
 };
 
@@ -593,6 +684,84 @@ message.addEventListener("keydown", (e) => {
     $("form").requestSubmit();
   }
 });
+
+// --- Voice: answer out loud ---
+// The mic records you, the server turns the audio into words with Groq's speech-to-text,
+// and the words land in the answer box. You read them, fix anything it misheard, then send.
+const mic = $("mic"), hint = $("hint");
+const HINT = hint.textContent;
+const VOICE_LIMIT_MS = 110000;   // the server takes about two minutes at most
+let recorder = null, voiceTimer = null, dropVoice = false;
+
+// Only offer the mic where the browser can record.
+mic.hidden = !(navigator.mediaDevices?.getUserMedia && window.MediaRecorder);
+
+function voiceType() {
+  return ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg"].find((t) => MediaRecorder.isTypeSupported(t)) || "";
+}
+
+async function startVoice() {
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  } catch {
+    return toast("Concept Check can't use your microphone. Allow it in the browser's address bar, or type your answer.");
+  }
+  const type = voiceType();
+  const chunks = [];
+  recorder = new MediaRecorder(stream, type ? { mimeType: type } : {});
+  recorder.ondataavailable = (e) => e.data.size && chunks.push(e.data);
+  recorder.onstop = () => {
+    stream.getTracks().forEach((t) => t.stop());
+    clearInterval(voiceTimer);
+    recorder = null;
+    mic.setAttribute("aria-pressed", "false");
+    mic.setAttribute("aria-label", "Answer out loud");
+    if (dropVoice) { dropVoice = false; hint.textContent = HINT; return; }
+    transcribe(new Blob(chunks, { type: (type || chunks[0]?.type || "audio/webm").split(";")[0] }));
+  };
+  recorder.start();
+  mic.setAttribute("aria-pressed", "true");
+  mic.setAttribute("aria-label", "Stop recording");
+  const began = Date.now();
+  const tick = () => {
+    const secs = Math.round((Date.now() - began) / 1000);
+    hint.textContent = "Listening… " + secs + "s. Press the mic again when you're done.";
+    if (Date.now() - began > VOICE_LIMIT_MS) stopVoice();
+  };
+  tick();
+  voiceTimer = setInterval(tick, 500);
+}
+
+// Send the recording to our server, never to Groq directly: the key stays on the server.
+// Address: /api/transcribe. Action: POST. Package: the audio itself.
+async function transcribe(audio) {
+  mic.disabled = true;
+  hint.textContent = "Turning your voice into text…";
+  try {
+    const r = await fetch("/api/transcribe", { method: "POST", headers: { "Content-Type": audio.type }, body: audio });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.detail || "Something went wrong");
+    if (!data.text) throw new Error("I didn't catch any words. Try again a little closer to the mic.");
+    message.value = (message.value.trim() ? message.value.trim() + " " : "") + data.text;
+    message.focus();
+    message.setSelectionRange(message.value.length, message.value.length);
+    hint.textContent = "Check the words, fix anything it misheard, then send.";
+  } catch (e) {
+    toast(e.message.startsWith("Failed") ? "Could not reach the server. Type your answer instead." : e.message);
+    hint.textContent = HINT;
+  }
+  mic.disabled = false;
+}
+
+// Leaving the test throws a recording away instead of transcribing it.
+function stopVoice(drop = false) {
+  if (!recorder || recorder.state === "inactive") return;
+  dropVoice = drop;
+  recorder.stop();
+}
+
+mic.onclick = () => (recorder ? stopVoice() : startVoice());
 
 function escape(s) {
   return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
