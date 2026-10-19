@@ -1,11 +1,12 @@
--- Concept Check schema. Run once in Supabase: SQL Editor, New query, paste, Run.
+-- Concept Check schema. Run in Supabase: SQL Editor, New query, paste, Run. Safe to run again:
+-- tables that already exist are left as they are.
 --
 -- Learners are not a table here. Supabase Auth keeps them, with their email and a
 -- hashed password, in its own auth.users table. We never store a password ourselves.
 
 -- One row each time a learner presses Start test.
 -- A retake is a new row, so old scores stay: history is a row, not a cell.
-create table tests (
+create table if not exists tests (
   id bigint generated always as identity primary key,
   user_id uuid not null references auth.users(id),
   subtopic text not null,
@@ -17,7 +18,7 @@ create table tests (
 );
 
 -- One row per question answered inside a test.
-create table attempts (
+create table if not exists attempts (
   id bigint generated always as identity primary key,
   test_id bigint not null references tests(id),
   question_id text not null,           -- an idea id from golden_pairs.json, such as be-process-1
