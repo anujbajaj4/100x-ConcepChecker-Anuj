@@ -2,7 +2,7 @@ import json
 import os
 import time
 from collections import defaultdict, deque
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 
 import requests
@@ -395,12 +395,11 @@ def current_user(request):
 # --- Rate limits -------------------------------------------------------------------
 # A sliding window: remember when each caller last hit us, and turn them back with
 # 429 and a Retry-After once they go over. These counters live in this server's
-# memory, so on Vercel each machine keeps its own; the daily test cap below is
-# counted in Supabase, so it holds everywhere.
+# memory, so on Vercel each machine keeps its own. There's no daily cap per learner:
+# if Groq's shared 1,000 requests a day run out, its own 429 reaches the learner.
 LOGINS_PER_MINUTE = 10    # per IP address, against password guessing
 ANSWERS_PER_MINUTE = 15   # per learner, each answer can mean up to three Groq calls
 PAGES_PER_MINUTE = 60     # per learner, for the map
-TESTS_PER_DAY = 10        # per learner, to share Groq's 1,000 requests a day
 WINDOWS = defaultdict(deque)
 
 
@@ -419,18 +418,6 @@ def client_ip(request):
     # Behind Vercel, the caller's real address is the first one in this header.
     forwarded = request.headers.get("x-forwarded-for", "")
     return forwarded.split(",")[0].strip() or (request.client.host if request.client else "unknown")
-
-
-def check_daily_tests(db):
-    midnight = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
-    # Row level security means this only counts this learner's own tests.
-    started = db.table("tests").select("id", count="exact").gte("created_at", midnight.isoformat()).execute().count or 0
-    if started >= TESTS_PER_DAY:
-        wait = int((midnight + timedelta(days=1) - datetime.now(timezone.utc)).total_seconds())
-        raise HTTPException(
-            429, f"You've started {TESTS_PER_DAY} tests today, the daily limit. It resets at midnight UTC (5:30 am IST).",
-            headers={"Retry-After": str(wait)},
-        )
 
 
 def is_https(request):
@@ -559,7 +546,6 @@ def chat_route(body: ChatIn, request: Request):
 
     # No test yet: create the row, and its id is how the page refers to this test from now on.
     if body.test_id is None:
-        check_daily_tests(db)  # 429 here after the day's tenth test
         s = new_test(body.subtopic)
         row = db.table("tests").insert({"user_id": user["id"], "subtopic": body.subtopic, "state": stored(s)}).execute().data[0]
         return {"test_id": row["id"], "messages": [intro(s), question(s)], "state": state(s)}
