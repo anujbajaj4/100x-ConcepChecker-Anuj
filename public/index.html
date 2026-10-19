@@ -356,14 +356,11 @@
   const statusOf = (score) => score == null ? "untested" : score >= 80 ? "mastered" : score >= 50 ? "getting" : "needs";
 
   // --- Login ---
-  // Your login token proves who you are to our server. It's kept in this browser,
-  // so a refresh doesn't log you out. It is yours alone and expires after an hour.
-  let token = load("token"), email = load("email");
-
-  function load(key) { try { return localStorage.getItem(key); } catch { return null; } }
-  function save(key, value) {
-    try { value === null ? localStorage.removeItem(key) : localStorage.setItem(key, value); } catch {}
-  }
+  // Your login token proves who you are to our server. The server keeps it in an
+  // HttpOnly cookie: the browser sends it to /api by itself, and this page's code can
+  // never read it, so a malicious script injected here couldn't steal it either.
+  // Nothing about you is saved in this browser's storage.
+  let email = null;
 
   // Address: /api/login or /api/signup. Action: POST. Package: email and password. Key: none yet.
   async function logIn(path) {
@@ -376,13 +373,12 @@
         body: JSON.stringify({ email: $("email").value.trim(), password: $("password").value }),
       });
       const data = await r.json().catch(() => ({}));
-      if (!r.ok || !data.token) {
-        error.textContent = data.message || data.detail?.[0]?.msg || data.detail || "Something went wrong. Try again.";
+      if (!r.ok || !data.email) {
+        error.textContent = data.message || data.detail || "Something went wrong. Try again.";
         error.hidden = false;
         return;
       }
-      token = data.token; email = data.email;
-      save("token", token); save("email", email);
+      email = data.email;
       $("password").value = "";
       showHome();
     } catch {
@@ -391,10 +387,18 @@
     }
   }
 
+  // Logging out asks the server to delete the cookie and end the session at Supabase.
   function logOut(reason) {
-    token = null; email = null; home = null; firstDraw = true;
-    save("token", null); save("email", null);
+    fetch("/api/logout", { method: "POST" }).catch(() => {});
+    email = null; home = null; firstDraw = true;
     showLogin(reason);
+  }
+
+  // A 401 means the server doesn't know who you are. On first visit that's normal,
+  // so just show the log-in screen. Mid-session it means your hour is up.
+  function loggedOut(detail) {
+    email = null; home = null; firstDraw = true;
+    showLogin(detail === "Log in first." ? "" : detail);
   }
 
   $("login-form").onsubmit = (e) => { e.preventDefault(); logIn("/api/login"); };
@@ -436,16 +440,18 @@
   let firstDraw = true;     // play the drawing animation only once per visit
 
   // Read: the topics, subtopics and your scores, in one request.
-  // Address: /api/home. Action: GET. Key: your login token.
+  // Address: /api/home. Action: GET. Key: your login cookie, sent by the browser.
   async function loadHome() {
     $("home-status").textContent = home ? "" : "Loading your map…";
     try {
-      const r = await fetch("/api/home", { headers: { "Authorization": "Bearer " + token } });
+      const r = await fetch("/api/home");
       const data = await r.json();
-      if (r.status === 401) return logOut(data.detail);
+      if (r.status === 401) return loggedOut(data.detail);
       if (!r.ok) throw new Error(r.status + ": " + (data.detail || "Something went wrong"));
       const previous = home;
       home = data;
+      email = data.email;
+      $("who").textContent = email;
       $("home-status").textContent = "";
       drawHome(previous);
     } catch (e) {
@@ -725,7 +731,7 @@
   }
 
   // Create: send one message, get the replies and the test's state back.
-  // Address: /api/chat. Action: POST. Package: JSON. Key: your login token, never the Groq key.
+  // Address: /api/chat. Action: POST. Package: JSON. Key: your login cookie, never the Groq key.
   async function talk(text, show = true) {
     if (show) addMine(text);
     const waiting = addRow('<p class="thinking">' + (show ? "Checking your answer…" : "Loading questions…") + "</p>");
@@ -733,17 +739,17 @@
     try {
       const r = await fetch("/api/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ test_id: testId, subtopic: subtopic, message: text }),
       });
       const data = await r.json();
       waiting.remove();
       if (r.status === 401) {
         send.disabled = false;
-        return logOut(data.detail);
+        return loggedOut(data.detail);
       }
       if (!r.ok) {
-        addRow('<p class="error">' + escape(r.status + ": " + (data.detail?.[0]?.msg || data.detail || "Something went wrong")) + "</p>");
+        addRow('<p class="error">' + escape(r.status + ": " + (data.detail || "Something went wrong")) + "</p>");
       } else {
         testId = data.test_id;
         data.messages.forEach(addBot);
@@ -893,8 +899,8 @@
     }).join("");
   }
 
-  // Logged in already? Go straight to the map. Otherwise, log in first.
-  if (token) showHome(); else showLogin();
+  // Open the map. If you aren't logged in, the server says 401 and the log-in screen shows instead.
+  showHome();
 </script>
 </body>
 </html>

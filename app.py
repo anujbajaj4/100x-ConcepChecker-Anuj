@@ -5,10 +5,10 @@ from pathlib import Path
 
 import requests
 from dotenv import load_dotenv
-from fastapi import FastAPI, Header, HTTPException
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-from supabase import create_client
+from supabase import ClientOptions, create_client
 
 from prompts import EXPLAIN_PROMPT, FOLLOW_UP_PROMPT, GRADER_PROMPT
 
@@ -64,22 +64,29 @@ CONCEPTS = {
 }
 
 
+# --- Keys: the least power that does the job ------------------------------------
+# app.py only ever holds Supabase's publishable key. On its own it can't read a single
+# row: every table request also carries the learner's own login token, and Supabase's
+# row level security (security.sql) lets each learner touch only their own rows.
+# The secret key stays in .env for the admin scripts (rest_check.py, rls_check.py)
+# and is never given to the app or to Vercel.
+def supabase_settings():
+    url, key = os.environ.get("SUPABASE_URL", ""), os.environ.get("SUPABASE_PUBLISHABLE_KEY", "")
+    if not url or not key:
+        raise HTTPException(500, "SUPABASE_URL or SUPABASE_PUBLISHABLE_KEY is missing from .env.")
+    return url, key
+
+
 # --- Storage, in Supabase -----------------------------------------------------------
 # Each test is a row in the tests table, so a refresh or a fresh Vercel machine
 # never loses your place. Each settled question is a row in attempts.
-# Like c8-db's step 08, the server talks to the tables through the SDK with the secret key.
-# This client is only used for tables, never to log anyone in, so learners never mix.
-_db = None
-
-
-def db():
-    global _db
-    if _db is None:
-        url, key = os.environ.get("SUPABASE_URL", ""), os.environ.get("SUPABASE_SERVICE_KEY", "")
-        if not url or not key:
-            raise HTTPException(500, "SUPABASE_URL or SUPABASE_SERVICE_KEY is missing from .env.")
-        _db = create_client(url, key)
-    return _db
+# Like c8-db's step 08, the server talks to the tables through the SDK, but as the
+# learner: a fresh client per request, carrying that learner's token, so learners never mix.
+def learner_db(token):
+    url, key = supabase_settings()
+    client = create_client(url, key, options=ClientOptions(auto_refresh_token=False, persist_session=False))
+    client.postgrest.auth(token)
+    return client
 
 
 def ask_groq(system, user):
@@ -258,10 +265,13 @@ def stored(s):
     return keep
 
 
-def load_test(test_id, user_id):
-    rows = db().table("tests").select("state").eq("id", test_id).eq("user_id", user_id).execute().data
+def load_test(db, test_id):
+    # Row level security only shows this learner their own tests. Another learner's
+    # test comes back empty, exactly as if it didn't exist, so we answer 403: you're
+    # logged in, but this isn't yours to open.
+    rows = db.table("tests").select("state").eq("id", test_id).execute().data
     if not rows:
-        raise HTTPException(404, "That test wasn't found. Start a new one from the map.")
+        raise HTTPException(403, "That test isn't yours to open. Start a new one from the map.")
     s = rows[0]["state"]
     s["pairs"] = [p for p in PAIRS if p["subtopic"] == s["subtopic"]]
     s["met"] = set(s["met"])
@@ -329,20 +339,24 @@ def respond(s, message):
 # --- Login, through Supabase Auth ------------------------------------------------
 # Supabase Auth is one more machine at an address: {SUPABASE_URL}/auth/v1.
 # The page never talks to it. The page sends the email and password to our server,
-# and our server, which holds the key, asks Supabase. The same four dials:
+# and our server asks Supabase. The same four dials:
 #   sign up:  POST /auth/v1/signup                    {email, password} in, a token out
 #   log in:   POST /auth/v1/token?grant_type=password {email, password} in, a token out
 #   who is this?  GET /auth/v1/user  with the learner's token in Authorization
+#   log out:  POST /auth/v1/logout   ends the session at Supabase too
 # We call these with plain requests instead of the SDK: the SDK keeps one logged-in
 # learner inside the client, and on a server shared by many learners that would mix them up.
+#
+# The token lives in an HttpOnly cookie that our server sets. The page's JavaScript
+# can't read it, so a script injected into the page can't steal it, and the browser
+# only sends it back to our own /api address.
+TOKEN_COOKIE = "cc_token"
 
 
 def supabase_auth(method, path, token=None, **kwargs):
-    url, key = os.environ.get("SUPABASE_URL", ""), os.environ.get("SUPABASE_SERVICE_KEY", "")
-    if not url or not key:
-        raise HTTPException(500, "SUPABASE_URL or SUPABASE_SERVICE_KEY is missing from .env.")
+    url, key = supabase_settings()
     headers = {"apikey": key, "Authorization": "Bearer " + (token or key)}
-    return requests.request(method, url + "/auth/v1" + path, headers=headers, **kwargs)
+    return requests.request(method, url + "/auth/v1" + path, headers=headers, timeout=15, **kwargs)
 
 
 def auth_error(r):
@@ -354,14 +368,34 @@ def auth_error(r):
 
 
 # Who sent this request? Check the learner's token with Supabase, every time.
-def current_user(authorization):
-    token = authorization.removeprefix("Bearer ").strip()
+# 401 means "we don't know who you are": no token, or one that has expired.
+def current_user(request):
+    token = request.cookies.get(TOKEN_COOKIE) or request.headers.get("authorization", "").removeprefix("Bearer ").strip()
     if not token:
         raise HTTPException(401, "Log in first.")
     r = supabase_auth("GET", "/user", token=token)
     if r.status_code != 200:
         raise HTTPException(401, "Your login has expired. Log in again.")
-    return r.json()
+    user = r.json()
+    user["token"] = token
+    return user
+
+
+def is_https(request):
+    # Vercel ends HTTPS at its edge and tells us so in this header.
+    return request.url.scheme == "https" or request.headers.get("x-forwarded-proto") == "https"
+
+
+def start_session(request, response, data):
+    response.set_cookie(
+        TOKEN_COOKIE, data["access_token"],
+        max_age=data.get("expires_in", 3600),  # the token's own lifetime: an hour
+        httponly=True,                         # page scripts can't read it
+        secure=is_https(request),              # only over HTTPS once deployed
+        samesite="strict",                     # never sent from another site's page
+        path="/api",                           # only sent to our API
+    )
+    return {"email": data["user"]["email"]}
 
 
 app = FastAPI()
@@ -381,62 +415,66 @@ class ChatIn(BaseModel):
 
 
 @app.post("/api/signup")
-def signup_route(body: LoginIn):
+def signup_route(body: LoginIn, request: Request, response: Response):
     r = supabase_auth("POST", "/signup", json={"email": body.email, "password": body.password})
     if not r.ok:
         raise auth_error(r)
     data = r.json()
     if "access_token" not in data:
         # Email confirmation is switched on in Supabase, so there is no login yet.
-        return {"token": None, "message": "Check your inbox to confirm your email, then log in."}
-    return {"token": data["access_token"], "email": data["user"]["email"]}
+        return {"email": None, "message": "Check your inbox to confirm your email, then log in."}
+    return start_session(request, response, data)
 
 
 @app.post("/api/login")
-def login_route(body: LoginIn):
+def login_route(body: LoginIn, request: Request, response: Response):
     r = supabase_auth("POST", "/token?grant_type=password", json={"email": body.email, "password": body.password})
     if not r.ok:
         raise auth_error(r)
-    data = r.json()
-    return {"token": data["access_token"], "email": data["user"]["email"]}
+    return start_session(request, response, r.json())
 
 
-@app.get("/api/subtopics")
-def subtopics_route():
-    return {"subtopics": SUBTOPICS}
+@app.post("/api/logout")
+def logout_route(request: Request, response: Response):
+    token = request.cookies.get(TOKEN_COOKIE)
+    if token:
+        supabase_auth("POST", "/logout", token=token)  # end the session at Supabase as well
+    response.delete_cookie(TOKEN_COOKIE, path="/api")
+    return {"ok": True}
 
 
 @app.post("/api/chat")
-def chat_route(body: ChatIn, authorization: str = Header(default="")):
-    user = current_user(authorization)  # 401 here if the learner isn't logged in
+def chat_route(body: ChatIn, request: Request):
+    user = current_user(request)  # 401 here if the learner isn't logged in
     if body.subtopic not in SUBTOPICS:
         raise HTTPException(400, "Unknown subtopic: " + body.subtopic)
+    db = learner_db(user["token"])
 
     # No test yet: create the row, and its id is how the page refers to this test from now on.
     if body.test_id is None:
         s = new_test(body.subtopic)
-        row = db().table("tests").insert({"user_id": user["id"], "subtopic": body.subtopic, "state": stored(s)}).execute().data[0]
+        row = db.table("tests").insert({"user_id": user["id"], "subtopic": body.subtopic, "state": stored(s)}).execute().data[0]
         return {"test_id": row["id"], "messages": [intro(s), question(s)], "state": state(s)}
 
     # Otherwise read where this learner was, answer, then write it back.
-    s = load_test(body.test_id, user["id"])
+    s = load_test(db, body.test_id)  # 403 here if the test isn't theirs
     messages = respond(s, body.message)
     for attempt in s["new_attempts"]:
-        db().table("attempts").insert({"test_id": body.test_id, **attempt}).execute()
+        db.table("attempts").insert({"test_id": body.test_id, **attempt}).execute()
     update = {"state": stored(s)}
     if s["new_attempts"] and s["index"] >= len(s["pairs"]):
         update["score"] = percent(s)  # stored as a percentage, which is what colours the map
         update["completed_at"] = datetime.now(timezone.utc).isoformat()
-    db().table("tests").update(update).eq("id", body.test_id).execute()
+    db.table("tests").update(update).eq("id", body.test_id).execute()
     return {"test_id": body.test_id, "messages": messages, "state": state(s)}
 
 
 # The map: every topic and subtopic, with this learner's latest and best score on each.
 @app.get("/api/home")
-def home_route(authorization: str = Header(default="")):
-    user = current_user(authorization)
+def home_route(request: Request):
+    user = current_user(request)
     finished = (
-        db().table("tests").select("subtopic, score, completed_at")
+        learner_db(user["token"]).table("tests").select("subtopic, score, completed_at")
         .eq("user_id", user["id"]).not_.is_("completed_at", "null")
         .order("completed_at").execute().data
     )

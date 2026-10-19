@@ -65,3 +65,18 @@ The model never decides on its own that a learner understands. The answer key is
 - `golden_pairs.json`: 54 questions with key points and pass rules across 12 subtopics.
 
 Quiz state is kept in the server's memory for now. It resets when the server restarts, and on Vercel a request can land on a fresh machine, so a quiz may lose its place there. Saving it to Supabase is next.
+
+## Security
+
+| Layer | What the app does |
+|---|---|
+| Keys | The browser holds no key. `app.py` uses only Supabase's publishable key plus each learner's own token, and the Groq key. The secret key is for the admin scripts and never goes to Vercel. `.env` is git-ignored. |
+| Who are you | Every `/api/chat` and `/api/home` request checks the learner's token with Supabase: no token or an expired one gets 401. Opening a test that isn't yours gets 403. |
+| Rows | `security.sql` turns on row level security policies: a learner can read, start and update only their own tests and attempts, and nobody can delete. `python3 rls_check.py` proves it with two practice learners. The login token sits in an HttpOnly cookie the page can't read, and quiz state lives on the server. |
+
+### If a key leaks
+
+1. Revoke it first: console.groq.com/keys for Groq, or Project Settings → API Keys in Supabase.
+2. Create a new one and put it in `.env` and in Vercel's environment variables.
+3. Anything still using the old key now fails with 401, which shows you what you missed.
+4. Delete the message or screenshot last. Once a key has been seen, assume it was copied.
