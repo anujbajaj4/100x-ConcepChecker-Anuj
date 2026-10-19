@@ -1,12 +1,14 @@
 import json
 import os
+from datetime import datetime, timezone
 from pathlib import Path
 
 import requests
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Header, HTTPException
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+from supabase import create_client
 
 from prompts import EXPLAIN_PROMPT, FOLLOW_UP_PROMPT, GRADER_PROMPT
 
@@ -42,9 +44,40 @@ NOTES = {
     "Database Integration": L8,
 }
 
-# One quiz per browser tab, kept in memory. It resets when the server restarts,
-# and on Vercel each request may land on a fresh machine. Supabase fixes both.
-SESSIONS = {}
+ROOT_TITLE = "Building APIs, UIs, and Backends"
+# The concepts inside each subtopic, shown on the map. They live in the notes and questions.
+CONCEPTS = {
+    "Designing a Good Spec": ["Observation", "Hypothesis", "Named User"],
+    "Golden Dataset and Verifiers": ["Golden Pairs", "Verifier", "Test-Driven Development"],
+    "Building the UI": ["Interface Choice", "Gradio Library", "Manual MVP"],
+    "Anatomy of an API Request": ["Address", "Action", "Key", "Package"],
+    "HTTP Methods (CRUD)": ["Create (POST)", "Read (GET)", "Update (PUT or PATCH)", "Delete (DELETE)"],
+    "Status Codes": ["2xx success", "4xx client errors", "5xx server errors"],
+    "The Process Layer": ["Prompt plus input", "Deterministic systems", "Abstraction vs understanding"],
+    "Raw Requests in Python": ["requests library", "Environment variables", "Model integration"],
+    "FastAPI and Validation": ["FastAPI framework", "Pydantic validation", "Server deployment"],
+    "Where Storage Lives": ["Client storage", "Server storage", "File persistence"],
+    "Domain Modelling Concepts": ["Entities", "Attributes", "Relationships"],
+    "Database Integration": ["PostgreSQL", "Supabase", "Row Level Security"],
+}
+
+
+# --- Storage, in Supabase -----------------------------------------------------------
+# Each test is a row in the tests table, so a refresh or a fresh Vercel machine
+# never loses your place. Each settled question is a row in attempts.
+# Like c8-db's step 08, the server talks to the tables through the SDK with the secret key.
+# This client is only used for tables, never to log anyone in, so learners never mix.
+_db = None
+
+
+def db():
+    global _db
+    if _db is None:
+        url, key = os.environ.get("SUPABASE_URL", ""), os.environ.get("SUPABASE_SERVICE_KEY", "")
+        if not url or not key:
+            raise HTTPException(500, "SUPABASE_URL or SUPABASE_SERVICE_KEY is missing from .env.")
+        _db = create_client(url, key)
+    return _db
 
 
 def ask_groq(system, user):
@@ -69,10 +102,11 @@ def ask_groq(system, user):
     return json.loads(r.json()["choices"][0]["message"]["content"])
 
 
+# Each turn is [what was asked, the learner's answer, the key point a follow-up aimed at].
 def conversation(s):
     lines = ["Learner's first answer: " + s["turns"][0][1]]
-    for follow_up, reply in s["turns"][1:]:
-        lines.append("Follow-up: " + follow_up + "\nLearner's reply: " + reply)
+    for turn in s["turns"][1:]:
+        lines.append("Follow-up: " + turn[0] + "\nLearner's reply: " + turn[1])
     return "\n\n".join(lines)
 
 
@@ -146,18 +180,32 @@ def done(s):
         "kind": "done",
         "status": status,
         "heading": f"Set complete: {s['score']:g} out of {total} ({percent}%). {label}.",
-        "text": "Try the set again to beat your score, or pick another subtopic.",
+        "text": "Your score is saved, and the map shows it. Try the set again to beat it, or head back to the map.",
     }
+
+
+def percent(s):
+    return round(100 * s["score"] / len(s["pairs"]))
 
 
 # Record the result, then either wait for "next" or close the set.
 def settle(s, points, card):
+    pair = s["pairs"][s["index"]]
+    # The attempt row for this question, saved by chat_route. Each follow-up keeps the
+    # key point it aimed at: the retry points at the gap it was meant to close.
+    s["new_attempts"].append({
+        "question_id": pair["id"],
+        "points": points,
+        "recited_sentence": s["recited"],
+        "turns": [{"asked": t[0], "answer": t[1], "aimed_at": t[2]} for t in s["turns"]],
+    })
     s["results"].append(points)
     s["score"] += points
     s["index"] += 1
     s["turns"] = []
     s["met"] = set()
     s["follow_ups"] = 0
+    s["recited"] = None
     if s["index"] < len(s["pairs"]):
         s["waiting"] = True
         return [card, {"kind": "next", "text": f"Say **next** when you're ready for question {s['index'] + 1}."}]
@@ -178,59 +226,82 @@ def state(s):
     }
 
 
-def respond(session_id, subtopic, message):
-    s = SESSIONS.get(session_id)
+def new_test(subtopic):
+    return {
+        "subtopic": subtopic,
+        "pairs": [p for p in PAIRS if p["subtopic"] == subtopic],
+        "index": 0,
+        "score": 0,
+        "results": [],
+        "turns": [],
+        "met": set(),
+        "follow_ups": 0,
+        "waiting": False,
+        "recited": None,
+        "new_attempts": [],
+    }
 
-    # Start a new set: first message, a new subtopic, or the last set is done.
-    if s is None or s["subtopic"] != subtopic or s["index"] >= len(s["pairs"]):
-        s = {
-            "subtopic": subtopic,
-            "pairs": [p for p in PAIRS if p["subtopic"] == subtopic],
-            "index": 0,
-            "score": 0,
-            "results": [],
-            "turns": [],
-            "met": set(),
-            "follow_ups": 0,
-            "waiting": False,
-        }
-        SESSIONS[session_id] = s
-        intro = {
-            "kind": "intro",
-            "text": f"{len(s['pairs'])} questions on **{subtopic}**. Answer in your own words, the way you'd explain it to a classmate. There's no need for textbook phrasing.",
-        }
-        return [intro, question(s)], s
+
+def intro(s):
+    return {
+        "kind": "intro",
+        "text": f"{len(s['pairs'])} questions on **{s['subtopic']}**. Answer in your own words, the way you'd explain it to a classmate. There's no need for textbook phrasing.",
+    }
+
+
+# What goes in the tests.state column: everything except what code can rebuild.
+def stored(s):
+    keep = {k: v for k, v in s.items() if k not in ("pairs", "met", "new_attempts")}
+    keep["met"] = sorted(s["met"])
+    return keep
+
+
+def load_test(test_id, user_id):
+    rows = db().table("tests").select("state").eq("id", test_id).eq("user_id", user_id).execute().data
+    if not rows:
+        raise HTTPException(404, "That test wasn't found. Start a new one from the map.")
+    s = rows[0]["state"]
+    s["pairs"] = [p for p in PAIRS if p["subtopic"] == s["subtopic"]]
+    s["met"] = set(s["met"])
+    s["new_attempts"] = []
+    return s
+
+
+def respond(s, message):
+    if s["index"] >= len(s["pairs"]):
+        return [{"kind": "next", "text": "This test is complete. Try the set again, or head back to the map."}]
 
     # A question was just settled: wait until the learner asks for the next one.
     if s["waiting"]:
         if "next" in message.lower():
             s["waiting"] = False
-            return [question(s)], s
-        return [{"kind": "next", "text": f"Say **next** when you're ready for question {s['index'] + 1}."}], s
+            return [question(s)]
+        return [{"kind": "next", "text": f"Say **next** when you're ready for question {s['index'] + 1}."}]
 
     pair = s["pairs"][s["index"]]
     if s["turns"]:
-        s["turns"][-1] = (s["turns"][-1][0], message)
+        s["turns"][-1][1] = message
     else:
-        s["turns"].append((pair["question"], message))
+        s["turns"].append([pair["question"], message, None])
 
     result = grade(pair, s)
     # Credit carries across replies: a point shown once stays shown.
     s["met"] |= set(result.get("key_points_met", []))
+    s["recited"] = s["recited"] or result.get("recited_sentence")
     gaps = missing(pair, s["met"])
 
     if not gaps and not result.get("fail_if_hit"):
         if s["follow_ups"] == 0:
             card = {"kind": "passed", "heading": "Nicely reasoned. 1 point.", "text": result.get("note", "")}
-            return settle(s, 1, card), s
+            return settle(s, 1, card)
         card = {"kind": "half", "heading": "You got there. Half a point for the nudge.", "text": result.get("note", "")}
-        return settle(s, 0.5, card), s
+        return settle(s, 0.5, card)
 
     if s["follow_ups"] < MAX_FOLLOW_UPS:
         target = gaps[0] if gaps else pair["key_points"][0]
         follow_up = write_follow_up(pair, s, target)
         s["follow_ups"] += 1
-        s["turns"].append((follow_up, ""))
+        s["turns"].append([follow_up, "", target["id"]])
         quote = result.get("recited_sentence") if s["follow_ups"] == 1 else None
         if quote:
             heading = "This part sounds a little memorised."
@@ -241,7 +312,7 @@ def respond(session_id, subtopic, message):
         else:
             heading = "No worries, let's take it one step at a time."
             text = "Think about this:"
-        return [{"kind": "follow_up", "heading": heading, "text": text, "question": follow_up, "quote": quote}], s
+        return [{"kind": "follow_up", "heading": heading, "text": text, "question": follow_up, "quote": quote}]
 
     # Out of nudges: walk through the full answer, then show the whole answer key.
     card = {
@@ -250,17 +321,82 @@ def respond(session_id, subtopic, message):
         "text": explain(pair, s),
         "key_points": [{"text": k["text"], "had": k["id"] in s["met"]} for k in pair["key_points"]],
     }
-    return settle(s, 0, card), s
+    return settle(s, 0, card)
+
+
+# --- Login, through Supabase Auth ------------------------------------------------
+# Supabase Auth is one more machine at an address: {SUPABASE_URL}/auth/v1.
+# The page never talks to it. The page sends the email and password to our server,
+# and our server, which holds the key, asks Supabase. The same four dials:
+#   sign up:  POST /auth/v1/signup                    {email, password} in, a token out
+#   log in:   POST /auth/v1/token?grant_type=password {email, password} in, a token out
+#   who is this?  GET /auth/v1/user  with the learner's token in Authorization
+# We call these with plain requests instead of the SDK: the SDK keeps one logged-in
+# learner inside the client, and on a server shared by many learners that would mix them up.
+
+
+def supabase_auth(method, path, token=None, **kwargs):
+    url, key = os.environ.get("SUPABASE_URL", ""), os.environ.get("SUPABASE_SERVICE_KEY", "")
+    if not url or not key:
+        raise HTTPException(500, "SUPABASE_URL or SUPABASE_SERVICE_KEY is missing from .env.")
+    headers = {"apikey": key, "Authorization": "Bearer " + (token or key)}
+    return requests.request(method, url + "/auth/v1" + path, headers=headers, **kwargs)
+
+
+def auth_error(r):
+    # Supabase explains a refusal in one of these fields, for example "Invalid login credentials".
+    data = r.json() if r.text else {}
+    message = data.get("msg") or data.get("error_description") or data.get("message") or "Login failed."
+    # A 4xx is the learner's to fix (wrong password, email taken); anything else is Supabase failing.
+    return HTTPException(r.status_code if 400 <= r.status_code < 500 else 502, message)
+
+
+# Who sent this request? Check the learner's token with Supabase, every time.
+def current_user(authorization):
+    token = authorization.removeprefix("Bearer ").strip()
+    if not token:
+        raise HTTPException(401, "Log in first.")
+    r = supabase_auth("GET", "/user", token=token)
+    if r.status_code != 200:
+        raise HTTPException(401, "Your login has expired. Log in again.")
+    return r.json()
 
 
 app = FastAPI()
 
 
-# The traffic police: a chat package must carry these three, as text.
+# The traffic police for login: an email and a password, both text.
+class LoginIn(BaseModel):
+    email: str
+    password: str
+
+
+# The traffic police for chat: which test (none yet means "start one"), the subtopic and the message.
 class ChatIn(BaseModel):
-    session_id: str
+    test_id: int | None = None
     subtopic: str
     message: str
+
+
+@app.post("/api/signup")
+def signup_route(body: LoginIn):
+    r = supabase_auth("POST", "/signup", json={"email": body.email, "password": body.password})
+    if not r.ok:
+        raise auth_error(r)
+    data = r.json()
+    if "access_token" not in data:
+        # Email confirmation is switched on in Supabase, so there is no login yet.
+        return {"token": None, "message": "Check your inbox to confirm your email, then log in."}
+    return {"token": data["access_token"], "email": data["user"]["email"]}
+
+
+@app.post("/api/login")
+def login_route(body: LoginIn):
+    r = supabase_auth("POST", "/token?grant_type=password", json={"email": body.email, "password": body.password})
+    if not r.ok:
+        raise auth_error(r)
+    data = r.json()
+    return {"token": data["access_token"], "email": data["user"]["email"]}
 
 
 @app.get("/api/subtopics")
@@ -269,11 +405,59 @@ def subtopics_route():
 
 
 @app.post("/api/chat")
-def chat_route(body: ChatIn):
+def chat_route(body: ChatIn, authorization: str = Header(default="")):
+    user = current_user(authorization)  # 401 here if the learner isn't logged in
     if body.subtopic not in SUBTOPICS:
         raise HTTPException(400, "Unknown subtopic: " + body.subtopic)
-    messages, s = respond(body.session_id, body.subtopic, body.message)
-    return {"messages": messages, "state": state(s)}
+
+    # No test yet: create the row, and its id is how the page refers to this test from now on.
+    if body.test_id is None:
+        s = new_test(body.subtopic)
+        row = db().table("tests").insert({"user_id": user["id"], "subtopic": body.subtopic, "state": stored(s)}).execute().data[0]
+        return {"test_id": row["id"], "messages": [intro(s), question(s)], "state": state(s)}
+
+    # Otherwise read where this learner was, answer, then write it back.
+    s = load_test(body.test_id, user["id"])
+    messages = respond(s, body.message)
+    for attempt in s["new_attempts"]:
+        db().table("attempts").insert({"test_id": body.test_id, **attempt}).execute()
+    update = {"state": stored(s)}
+    if s["new_attempts"] and s["index"] >= len(s["pairs"]):
+        update["score"] = percent(s)  # stored as a percentage, which is what colours the map
+        update["completed_at"] = datetime.now(timezone.utc).isoformat()
+    db().table("tests").update(update).eq("id", body.test_id).execute()
+    return {"test_id": body.test_id, "messages": messages, "state": state(s)}
+
+
+# The map: every topic and subtopic, with this learner's latest and best score on each.
+@app.get("/api/home")
+def home_route(authorization: str = Header(default="")):
+    user = current_user(authorization)
+    finished = (
+        db().table("tests").select("subtopic, score, completed_at")
+        .eq("user_id", user["id"]).not_.is_("completed_at", "null")
+        .order("completed_at").execute().data
+    )
+    scores = {}
+    for row in finished:  # oldest first, so the last one seen is the latest
+        mine = scores.setdefault(row["subtopic"], {"latest": None, "best": None, "tests": 0})
+        mine["latest"] = round(row["score"])
+        mine["best"] = max(mine["best"] or 0, round(row["score"]))
+        mine["tests"] += 1
+
+    topics = []
+    for subtopic in SUBTOPICS:
+        topic = next(p["topic"] for p in PAIRS if p["subtopic"] == subtopic)
+        if not topics or topics[-1]["title"] != topic:
+            topics.append({"title": topic, "subtopics": []})
+        topics[-1]["subtopics"].append({
+            "title": subtopic,
+            "concepts": CONCEPTS.get(subtopic, []),
+            "questions": sum(1 for p in PAIRS if p["subtopic"] == subtopic),
+            "notes_url": NOTES.get(subtopic, ""),
+            **scores.get(subtopic, {"latest": None, "best": None, "tests": 0}),
+        })
+    return {"title": ROOT_TITLE, "email": user.get("email"), "topics": topics}
 
 
 # Locally, serve the page from this same server, so the page and the API share

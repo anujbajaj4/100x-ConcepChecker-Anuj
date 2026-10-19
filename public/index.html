@@ -10,38 +10,132 @@
   :root {
     --ink: #1E2B45; --text: #3A4559; --muted: #566175; --line: #D5DBE3; --line-strong: #C3CBD6;
     --ground: #F4F6F9; --card: #FFFFFF; --mine: #E8EDF4;
-    --green: #1F6E46; --green-bg: #EEF7F1; --green-line: #A9CFB7;
-    --amber: #8A5A00; --amber-bar: #B07A12; --amber-bg: #FDF6E7; --amber-line: #E8CF96;
-    --red: #A8321C; --soft-bg: #F2F5F9; --soft-line: #C9D2E0; --focus: #2F5BD3;
+    --green: #1F6E46; --green-bg: #EEF7F1; --green-line: #A9CFB7; --green-tint: #CDE7D6;
+    --amber: #8A5A00; --amber-bar: #B07A12; --amber-bg: #FDF6E7; --amber-line: #E8CF96; --amber-tint: #F4DFA6;
+    --red: #A8321C; --red-tint: #F4CEC4; --grey: #5E6878; --grey-bar: #D5DBE3;
+    --soft-bg: #F2F5F9; --soft-line: #C9D2E0; --focus: #2F5BD3; --link: #B5BFCC;
   }
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
-  /* The page is exactly one screen tall: the header stays put and the chat scrolls inside its own panel. */
+  /* The page is exactly one screen tall: the header stays put and each view scrolls inside itself. */
   html, body { height: 100%; }
   body { margin: 0; background: var(--ground); color: var(--ink); font: 16px/1.6 'Schibsted Grotesk', system-ui, sans-serif; display: flex; flex-direction: column; }
-  .top { flex: none; }
-  button, select, textarea { font: inherit; color: inherit; }
+  button, select, textarea, input { font: inherit; color: inherit; }
   :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
   a { color: var(--ink); } a:hover { color: var(--focus); }
 
   /* Header */
-  .top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; padding: 12px 32px; background: var(--card); border-bottom: 1px solid var(--line); }
-  .top-left { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; min-width: 0; }
+  .top { flex: none; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; padding: 12px 32px; background: var(--card); border-bottom: 1px solid var(--line); }
+  .top-left { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; min-width: 0; }
+  .brand-mark { flex: none; }
   .crumbs { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
   .crumbs span { font-size: 13px; color: var(--muted); }
   .crumbs h1 { margin: 0; font-size: 20px; line-height: 1.2; letter-spacing: -0.01em; }
+  .head-group { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; }
   .top-right { display: flex; align-items: center; gap: 16px; font-size: 14.5px; color: var(--text); }
+  #who { font-size: 14px; color: var(--muted); }
+  .progress { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--muted); }
+  .progress strong { color: var(--ink); font-weight: 600; }
+  .hsegs { display: flex; gap: 3px; }
+  .hsegs span { width: 14px; height: 6px; border-radius: 2px; background: var(--grey-bar); transition: background 0.4s; }
   .btn { min-height: 44px; padding: 0 16px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--card); font-size: 14.5px; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
+  .btn:hover { border-color: var(--ink); color: var(--ink); }
   .btn.primary { background: var(--ink); border-color: var(--ink); color: #fff; font-weight: 600; }
   .btn:disabled { opacity: 0.5; cursor: wait; }
 
-  /* Picker */
+  /* Log in */
   .picker { max-width: 560px; margin: 64px auto; padding: 0 16px; }
   .picker-card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 28px; display: flex; flex-direction: column; gap: 16px; }
   .picker h2 { margin: 0; font-size: 24px; line-height: 1.2; letter-spacing: -0.02em; }
   .picker p { margin: 0; color: var(--text); }
   .field { display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600; }
-  select { min-height: 44px; border: 1.5px solid var(--ink); border-radius: 8px; background: var(--card); padding: 0 12px; }
+  .field input { min-height: 44px; border: 1.5px solid var(--ink); border-radius: 8px; background: var(--card); padding: 0 12px; font-weight: 400; }
+
+  /* Home: the map */
+  .home { flex: 1; min-height: 0; overflow-y: auto; }
+  .home-inner { max-width: 1320px; margin: 0 auto; padding: 28px 32px 48px; display: flex; flex-direction: column; gap: 18px; }
+  .home-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px 40px; }
+  .home-head h2 { margin: 0 0 4px; font-size: 30px; line-height: 1.15; letter-spacing: -0.02em; }
+  .home-head p { margin: 0; color: var(--muted); }
+  .legend { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+  .legend-items { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { min-height: 36px; padding: 0 12px 0 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); font-size: 13.5px; color: var(--text); display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+  .chip:hover { border-color: var(--ink); }
+  .chip[aria-pressed="true"] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); color: var(--ink); font-weight: 600; }
+  .sw { width: 14px; height: 14px; border-radius: 3px; flex: none; }
+  .sw.mastered { background: var(--green); } .sw.getting { background: var(--amber-bar); } .sw.needs { background: var(--red); }
+  .sw.untested { border: 1.5px solid #8A93A3; }
+  .legend .small { max-width: 52ch; }
+
+  .suggest { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; padding: 14px 18px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; }
+  .suggest p { margin: 0; color: var(--text); }
+  .suggest strong { color: var(--ink); }
+
+  .board-wrap { background-color: var(--card); background-image: radial-gradient(#D6DCE5 1px, transparent 1px); background-size: 22px 22px; border: 1px solid var(--line); border-radius: 14px; padding: 28px 24px; }
+  .stage { position: relative; margin: 0 auto; }
+  .board { position: absolute; left: 0; top: 0; width: 1190px; height: 680px; transform-origin: 0 0; }
+  .board > svg { position: absolute; left: 0; top: 0; overflow: visible; }
+  .link { fill: none; stroke: var(--link); stroke-width: 1.5; transition: stroke 0.2s, stroke-width 0.2s, opacity 0.25s; }
+  .link.on, .link.hover { stroke: var(--ink); stroke-width: 2.25; }
+  .node { position: absolute; transition: opacity 0.25s, border-color 0.15s, box-shadow 0.15s; }
+  .root { left: 0; width: 200px; height: 84px; padding: 14px 18px; border-radius: 12px; background: var(--ink); color: #fff; display: flex; align-items: center; font-size: 16px; font-weight: 600; line-height: 1.3; }
+  .topic { left: 280px; width: 230px; height: 72px; padding: 10px 14px; border: 1.5px solid var(--ink); border-radius: 10px; background: var(--card); display: flex; flex-direction: column; justify-content: space-between; text-align: left; cursor: pointer; }
+  .topic:hover { box-shadow: 0 4px 14px rgba(30, 43, 69, 0.12); }
+  .topic[aria-pressed="true"] { background: var(--ink); color: #fff; }
+  .topic[aria-pressed="true"] .roll { color: #fff !important; }
+  .topic .t { font-size: 15px; font-weight: 600; line-height: 1.25; }
+  .roll { display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 500; }
+  .tri { display: flex; gap: 2px; }
+  .tri span { width: 16px; height: 6px; border-radius: 2px; }
+  .sub { left: 600px; width: 300px; height: 44px; padding: 0 14px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--card); overflow: hidden; display: flex; align-items: center; justify-content: space-between; gap: 12px; text-align: left; cursor: pointer; font-size: 14.5px; font-weight: 500; }
+  .sub .fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; transition: width 0.9s cubic-bezier(0.2, 0.7, 0.2, 1); }
+  .sub .name, .sub .score { position: relative; white-space: nowrap; }
+  .sub .name { overflow: hidden; text-overflow: ellipsis; }
+  .sub .score { font-size: 13px; font-weight: 600; }
+  .sub:hover { border-color: var(--ink); }
+  .sub.is-selected { border-color: var(--ink); box-shadow: 0 0 0 1.5px var(--ink); }
+  .sub.suggested { outline: 2px dashed #8A93A3; outline-offset: 3px; }
+  .sub.updated { animation: ping 1.1s ease-out 2; }
+  @keyframes ping { 0% { box-shadow: 0 0 0 0 rgba(31, 110, 70, 0.5); } 100% { box-shadow: 0 0 0 12px rgba(31, 110, 70, 0); } }
+  .dim { opacity: 0.25; }
+
+  .pop { position: absolute; left: 930px; width: 260px; padding: 16px 18px 18px; border: 1.5px solid var(--ink); border-radius: 12px; background: var(--card); box-shadow: 0 12px 30px rgba(30, 43, 69, 0.18); display: flex; flex-direction: column; gap: 12px; transition: top 0.2s ease; }
+  .pop-head { display: flex; justify-content: space-between; gap: 8px; }
+  .pop-topic { margin: 0; font-size: 13px; color: var(--muted); }
+  .pop h3 { margin: 2px 0 2px; font-size: 19px; line-height: 1.25; letter-spacing: -0.01em; }
+  .pop-status { margin: 0; font-size: 13.5px; font-weight: 600; }
+  .pop-covers { margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--text); }
+  .pop-actions { display: flex; flex-direction: column; gap: 8px; }
+  .pop-btn { display: flex; flex-direction: column; gap: 1px; padding: 10px 14px; min-height: 44px; border: 1.5px solid var(--ink); border-radius: 8px; background: var(--card); text-decoration: none; text-align: left; cursor: pointer; color: var(--ink); }
+  .pop-btn b { font-size: 15px; font-weight: 600; }
+  .pop-btn small { font-size: 12.5px; color: var(--muted); }
+  .pop-btn.primary { background: var(--ink); color: #fff; }
+  .pop-btn.primary small { color: #C9D2E0; }
+  .pop-btn.off { border-style: dashed; border-color: #8A93A3; cursor: default; }
+  .x { flex: none; width: 32px; height: 32px; border: none; border-radius: 6px; background: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--muted); }
+  .x:hover { background: var(--soft-bg); color: var(--ink); }
+
+  /* Phone: the map becomes a list of topics */
+  .tree { display: none; flex-direction: column; gap: 14px; }
+  .tree-topic { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .tree-topic h3 { margin: 0; font-size: 16px; }
+  .tree .sub { position: relative; left: auto; width: 100%; }
+  .tree .detail { border: 1.5px solid var(--ink); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .tree .detail .x { display: none; }
+
+  .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); max-width: calc(100% - 32px); padding: 12px 18px; border-radius: 10px; background: var(--ink); color: #fff; font-size: 15px; box-shadow: 0 10px 30px rgba(30, 43, 69, 0.3); z-index: 10; }
+
+  /* The one orchestrated moment: on first load, the map draws itself from the root outwards. */
+  @media (prefers-reduced-motion: no-preference) {
+    .intro .link { stroke-dasharray: 1; animation: draw 0.55s ease var(--d) both; }
+    .intro .node { animation: rise 0.35s ease var(--d) both; }
+    @keyframes draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+    @keyframes rise { from { opacity: 0; transform: translateX(-10px); } }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .sub .fill, .pop, .link, .node { transition: none !important; }
+    .sub.updated { animation: none; }
+  }
 
   /* Test layout */
   .layout { flex: 1; min-height: 0; width: 100%; max-width: 1280px; margin: 0 auto; padding: 24px 32px; display: flex; gap: 28px; }
@@ -94,26 +188,31 @@
   .error { color: var(--red); font-weight: 600; }
 
   /* Answer box */
-  form { display: flex; flex-direction: column; gap: 8px; }
-  form label { font-size: 14px; font-weight: 600; }
+  #form { display: flex; flex-direction: column; gap: 8px; }
+  #form label { font-size: 14px; font-weight: 600; }
   .box { display: flex; align-items: flex-end; gap: 10px; padding: 10px 10px 10px 16px; background: var(--card); border: 1.5px solid var(--ink); border-radius: 12px; }
   .box textarea { flex: 1; min-width: 0; border: none; resize: none; background: transparent; font-size: 16px; line-height: 1.5; padding: 4px 0; outline-offset: 6px; }
   .send { flex: none; width: 44px; height: 44px; border: none; border-radius: 8px; background: var(--ink); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; }
   .send:disabled { opacity: 0.5; cursor: wait; }
 
-  /* Narrow screens: the sidebar stacks above the chat, the page scrolls,
-     and the answer box sticks to the bottom of the screen. */
+  /* Narrow screens: views stack and the page scrolls. */
   @media (max-width: 860px) {
     html, body { height: auto; }
+    .home { overflow: visible; }
     .layout { flex-direction: column; }
     aside { flex: none; overflow: visible; }
     .chat { max-width: none; }
     .thread { flex: none; overflow: visible; min-height: 240px; }
-    form { position: sticky; bottom: 0; background: var(--ground); padding: 10px 0 12px; }
+    #form { position: sticky; bottom: 0; background: var(--ground); padding: 10px 0 12px; }
+  }
+  @media (max-width: 760px) {
+    .board-wrap { display: none; }
+    .tree { display: flex; }
   }
   @media (max-width: 640px) {
-    .top, .layout { padding-left: 16px; padding-right: 16px; }
+    .top, .layout, .home-inner { padding-left: 16px; padding-right: 16px; }
     .thread { padding: 20px 16px; }
+    .home-head h2 { font-size: 24px; }
   }
 </style>
 </head>
@@ -123,27 +222,76 @@
   <div class="top-left">
     <a id="back" class="btn" href="/" hidden>
       <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M11 4 L6 9 L11 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      All subtopics
+      Back to map
     </a>
+    <svg class="brand-mark" id="brand" width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><circle cx="6" cy="14" r="4" fill="#1E2B45"/><circle cx="22" cy="6" r="3.5" fill="none" stroke="#1E2B45" stroke-width="2"/><circle cx="22" cy="22" r="3.5" fill="none" stroke="#1E2B45" stroke-width="2"/><path d="M10 14 C14 14 14 6 18.5 6 M10 14 C14 14 14 22 18.5 22" fill="none" stroke="#1E2B45" stroke-width="2"/></svg>
     <div class="crumbs">
-      <span id="topic"></span>
+      <span id="topic" hidden></span>
       <h1 id="title">Concept Check</h1>
     </div>
   </div>
-  <div class="top-right" id="head-right" hidden>
-    <span id="count"></span>
-    <button id="end" class="btn" type="button">End test</button>
+  <div class="head-group">
+    <div class="progress" id="progress" hidden>
+      <span><strong id="done-count">0 of 12</strong> sets done</span>
+      <div class="hsegs" id="hsegs" role="img" aria-label="Progress across all subtopics"></div>
+    </div>
+    <div class="top-right" id="head-right" hidden>
+      <span id="count"></span>
+      <button id="end" class="btn" type="button">End test</button>
+    </div>
+    <div class="top-right" id="account" hidden>
+      <span id="who"></span>
+      <button id="logout" class="btn" type="button">Log out</button>
+    </div>
   </div>
 </header>
 
-<section class="picker" id="picker">
-  <div class="picker-card">
-    <h2>Test yourself on one subtopic</h2>
-    <p>You'll answer a few real-life questions in chat. If part of an answer sounds memorised, you'll get a nudge to work it out in your own words.</p>
-    <label class="field">Subtopic
-      <select id="subtopic"></select>
+<section class="picker" id="login" hidden>
+  <form class="picker-card" id="login-form">
+    <h2>Log in to Concept Check</h2>
+    <p>Your scores are saved to your account, so the map remembers what you've already worked out.</p>
+    <label class="field">Email
+      <input id="email" type="email" autocomplete="email" required>
     </label>
-    <div><button id="start" class="btn primary" type="button">Start test</button></div>
+    <label class="field">Password
+      <input id="password" type="password" autocomplete="current-password" minlength="6" required>
+    </label>
+    <p class="error" id="login-error" role="alert" hidden></p>
+    <div class="actions">
+      <button class="btn primary" type="submit">Log in</button>
+      <button class="btn" type="button" id="signup">Create account</button>
+    </div>
+    <p class="small">New here? Enter your email and a password of at least 6 characters, then press Create account.</p>
+  </form>
+</section>
+
+<section class="home" id="home" hidden>
+  <div class="home-inner">
+    <div class="home-head">
+      <div>
+        <h2 id="root-title">Building APIs, UIs, and Backends</h2>
+        <p>Pick a subtopic to revise its notes or test yourself on it.</p>
+      </div>
+      <div class="legend">
+        <div class="legend-items" role="group" aria-label="Highlight subtopics by status">
+          <button class="chip" type="button" data-status="mastered" aria-pressed="false"><span class="sw mastered"></span>Mastered, 80% and up</button>
+          <button class="chip" type="button" data-status="getting" aria-pressed="false"><span class="sw getting"></span>Getting there, 50 to 79%</button>
+          <button class="chip" type="button" data-status="needs" aria-pressed="false"><span class="sw needs"></span>Needs work, under 50%</button>
+          <button class="chip" type="button" data-status="untested" aria-pressed="false"><span class="sw untested"></span>Not tested</button>
+        </div>
+        <p class="small">Press a colour to find those subtopics. A topic shows its weakest subtopic, and each fill is your latest score.</p>
+      </div>
+    </div>
+
+    <div class="suggest" id="suggest" hidden></div>
+
+    <div class="board-wrap" id="board-wrap">
+      <div class="stage" id="stage">
+        <div class="board" id="board"></div>
+      </div>
+    </div>
+    <div class="tree" id="tree"></div>
+    <p class="small" id="home-status" aria-live="polite"></p>
   </div>
 </section>
 
@@ -180,10 +328,11 @@
   </main>
 </div>
 
+<div class="toast" id="toast" role="status" hidden></div>
+
 <script>
   const $ = (id) => document.getElementById(id);
   const log = $("log"), message = $("message"), send = $("send");
-  let sessionId = null;
 
   const LOGO = '<svg width="18" height="18" viewBox="0 0 28 28" aria-hidden="true"><circle cx="6" cy="14" r="4" fill="#fff"/><circle cx="22" cy="6" r="3.5" fill="none" stroke="#fff" stroke-width="2.5"/><circle cx="22" cy="22" r="3.5" fill="none" stroke="#fff" stroke-width="2.5"/><path d="M10 14 C14 14 14 6 18.5 6 M10 14 C14 14 14 22 18.5 22" fill="none" stroke="#fff" stroke-width="2.5"/></svg>';
   const ICONS = {
@@ -193,16 +342,390 @@
     current: '<svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="9.25" fill="#fff" stroke="#1E2B45" stroke-width="2"/><circle cx="11" cy="11" r="4" fill="#1E2B45"/></svg>',
     upcoming: '<svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="9.25" fill="none" stroke="#8A93A3" stroke-width="1.5"/></svg>',
   };
+  const CLOSE = '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4 L12 12 M12 4 L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
   const RESULT = { 1: ["passed", "Passed", "#1F6E46"], 0.5: ["half", "Passed after a nudge", "#8A5A00"], 0: ["missed", "Not yet", "#A8321C"] };
   const SEG = { 1: "#1F6E46", 0.5: "#B07A12", 0: "#A8321C" };
 
-  // Read: fill the dropdown from the server.
-  fetch("/api/subtopics").then((r) => r.json()).then((data) => {
-    for (const name of data.subtopics) $("subtopic").add(new Option(name, name));
+  // How each status looks on the map.
+  const STATUS = {
+    mastered: { label: "Mastered", strong: "#1F6E46", tint: "#CDE7D6", bar: "#1F6E46" },
+    getting: { label: "Getting there", strong: "#8A5A00", tint: "#F4DFA6", bar: "#B07A12" },
+    needs: { label: "Needs work", strong: "#A8321C", tint: "#F4CEC4", bar: "#A8321C" },
+    untested: { label: "Not tested", strong: "#5E6878", tint: "transparent", bar: "#D5DBE3" },
+  };
+  const statusOf = (score) => score == null ? "untested" : score >= 80 ? "mastered" : score >= 50 ? "getting" : "needs";
+
+  // --- Login ---
+  // Your login token proves who you are to our server. It's kept in this browser,
+  // so a refresh doesn't log you out. It is yours alone and expires after an hour.
+  let token = load("token"), email = load("email");
+
+  function load(key) { try { return localStorage.getItem(key); } catch { return null; } }
+  function save(key, value) {
+    try { value === null ? localStorage.removeItem(key) : localStorage.setItem(key, value); } catch {}
+  }
+
+  // Address: /api/login or /api/signup. Action: POST. Package: email and password. Key: none yet.
+  async function logIn(path) {
+    const error = $("login-error");
+    error.hidden = true;
+    try {
+      const r = await fetch(path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: $("email").value.trim(), password: $("password").value }),
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok || !data.token) {
+        error.textContent = data.message || data.detail?.[0]?.msg || data.detail || "Something went wrong. Try again.";
+        error.hidden = false;
+        return;
+      }
+      token = data.token; email = data.email;
+      save("token", token); save("email", email);
+      $("password").value = "";
+      showHome();
+    } catch {
+      error.textContent = "Could not reach the server. Is it running?";
+      error.hidden = false;
+    }
+  }
+
+  function logOut(reason) {
+    token = null; email = null; home = null; firstDraw = true;
+    save("token", null); save("email", null);
+    showLogin(reason);
+  }
+
+  $("login-form").onsubmit = (e) => { e.preventDefault(); logIn("/api/login"); };
+  $("signup").onclick = () => { if ($("login-form").reportValidity()) logIn("/api/signup"); };
+  $("logout").onclick = () => logOut();
+
+  // --- Views ---
+  function showView(name) {
+    for (const id of ["login", "home", "test"]) $(id).hidden = id !== name;
+    $("back").hidden = name !== "test";
+    $("brand").style.display = name === "test" ? "none" : "";
+    $("head-right").hidden = name !== "test";
+    $("progress").hidden = name !== "home";
+    $("account").hidden = name === "login";
+    $("who").textContent = email || "";
+    $("topic").hidden = name !== "test";
+    if (name !== "test") $("title").textContent = "Concept Check";
+  }
+
+  function showLogin(reason) {
+    showView("login");
+    $("login-error").textContent = reason || "";
+    $("login-error").hidden = !reason;
+  }
+
+  function showHome() {
+    showView("home");
+    loadHome();
+  }
+
+  // --- Home: the mind map ---
+  // Board coordinates, in px, before the board is scaled to fit the screen.
+  const W = 1190, H = 680, ROW = 54, SUB_X = 600, SUB_W = 300, POP_X = 930;
+  let home = null;          // the latest /api/home reply
+  let subs = [];            // every subtopic, flattened, with its position
+  let selected = null;      // index of the selected subtopic
+  let filter = null;        // status highlighted from the legend
+  let focusTopic = null;    // topic whose branch is highlighted
+  let firstDraw = true;     // play the drawing animation only once per visit
+
+  // Read: the topics, subtopics and your scores, in one request.
+  // Address: /api/home. Action: GET. Key: your login token.
+  async function loadHome() {
+    $("home-status").textContent = home ? "" : "Loading your map…";
+    try {
+      const r = await fetch("/api/home", { headers: { "Authorization": "Bearer " + token } });
+      const data = await r.json();
+      if (r.status === 401) return logOut(data.detail);
+      if (!r.ok) throw new Error(r.status + ": " + (data.detail || "Something went wrong"));
+      const previous = home;
+      home = data;
+      $("home-status").textContent = "";
+      drawHome(previous);
+    } catch (e) {
+      $("home-status").textContent = e.message.startsWith("Failed") ? "Could not reach the server. Is it running?" : e.message;
+    }
+  }
+
+  function drawHome(previous) {
+    $("root-title").textContent = home.title;
+    // Flatten subtopics and remember what each scored last time we drew, to animate changes.
+    const before = {};
+    if (previous) previous.topics.forEach((t) => t.subtopics.forEach((s) => (before[s.title] = s.latest)));
+    subs = [];
+    home.topics.forEach((t, ti) => t.subtopics.forEach((s) => {
+      const i = subs.length;
+      subs.push({ ...s, i, ti, topic: t.title, y: 42 + i * ROW, status: statusOf(s.latest), before: s.title in before ? before[s.title] : s.latest });
+    }));
+    home.topics.forEach((t, ti) => {
+      const mine = subs.filter((s) => s.ti === ti);
+      t.y = mine.reduce((a, s) => a + s.y, 0) / mine.length;
+      const tested = mine.filter((s) => s.latest != null);
+      t.weakest = tested.length ? Math.min(...tested.map((s) => s.latest)) : null;
+      t.tested = tested.length;
+      t.count = mine.length;
+    });
+    drawProgress();
+    drawSuggest();
+    drawBoard();
+    drawTree();
+    applyHighlights();
+    if (selected != null) select(selected, false);
+
+    // Anything that changed since the last draw grows to its new score, then pings once.
+    const changed = subs.filter((s) => s.before !== s.latest);
+    if (changed.length) {
+      const s = changed[0];
+      toast(`${s.title}: ${s.before == null ? "first score" : s.before + "%"} → ${s.latest}%. ${STATUS[s.status].label}.`);
+    }
+    // Each fill starts at the old score (or empty on first visit) and grows to the new one.
+    setTimeout(() => {
+      document.querySelectorAll(".sub[data-i]").forEach((el) => {
+        const s = subs[el.dataset.i];
+        el.querySelector(".fill").style.width = (s.latest || 0) + "%";
+        if (s.before !== s.latest) el.classList.add("updated");
+      });
+    }, firstDraw ? 500 : 60);
+    firstDraw = false;
+  }
+
+  function drawProgress() {
+    const done = subs.filter((s) => s.latest != null).length;
+    $("done-count").textContent = done + " of " + subs.length;
+    $("hsegs").innerHTML = subs.map((s) => '<span style="background:' + STATUS[s.status].bar + '" title="' + escape(s.title) + '"></span>').join("");
+  }
+
+  // Suggest one next step: your weakest set below 80%, else the first set you haven't tried.
+  function drawSuggest() {
+    const tested = subs.filter((s) => s.latest != null && s.latest < 80).sort((a, b) => a.latest - b.latest);
+    const fresh = subs.find((s) => s.latest == null);
+    let pick, text;
+    if (tested.length) {
+      pick = tested[0];
+      text = `Your weakest set is <strong>${escape(pick.title)}</strong> at ${pick.latest}%. One more go could move it up.`;
+    } else if (fresh) {
+      pick = fresh;
+      text = subs.some((s) => s.latest != null)
+        ? `Everything you've tested is at 80% or more. Next up: <strong>${escape(pick.title)}</strong>.`
+        : `New here? Start with <strong>${escape(pick.title)}</strong>, the first idea on the map.`;
+    } else {
+      pick = null;
+      text = "Every subtopic is mastered. Retake any set to keep it fresh.";
+    }
+    subs.forEach((s) => (s.suggested = pick && s.i === pick.i));
+    $("suggest").hidden = false;
+    $("suggest").innerHTML = "<p>" + text + "</p>" + (pick
+      ? '<div class="actions" style="margin:0"><button class="btn" type="button" data-act="show" data-i="' + pick.i + '">Show on map</button><button class="btn primary" type="button" data-act="test" data-i="' + pick.i + '">Test it now</button></div>'
+      : "");
+  }
+
+  function linkPath(x1, y1, x2, y2) {
+    const mx = (x1 + x2) / 2;
+    return `M${x1} ${y1} C${mx} ${y1} ${mx} ${y2} ${x2} ${y2}`;
+  }
+
+  function drawBoard() {
+    const rootY = home.topics.reduce((a, t) => a + t.y, 0) / home.topics.length;
+    let svg = '<svg width="' + W + '" height="' + H + '" aria-hidden="true">';
+    home.topics.forEach((t, ti) => {
+      svg += '<path class="link" pathLength="1" data-t="' + ti + '" style="--d:' + (80 + ti * 60) + 'ms" d="' + linkPath(200, rootY, 280, t.y) + '"/>';
+    });
+    subs.forEach((s) => {
+      svg += '<path class="link" pathLength="1" data-t="' + s.ti + '" data-s="' + s.i + '" style="--d:' + (380 + s.i * 30) + 'ms" d="' + linkPath(510, home.topics[s.ti].y, SUB_X, s.y) + '"/>';
+    });
+    svg += '<path class="link on" id="pop-link" d=""/></svg>';
+
+    let html = svg + '<div class="node root" style="top:' + (rootY - 42) + 'px;--d:0ms">' + escape(home.title) + "</div>";
+    home.topics.forEach((t, ti) => {
+      const mine = subs.filter((s) => s.ti === ti);
+      const st = STATUS[statusOf(t.weakest)];
+      // The three small bars show how many are tested; the text names the weakest score.
+      const roll = t.weakest == null ? "Not tested yet" : "Weakest " + t.weakest + "%";
+      html += '<button class="node topic" type="button" data-topic="' + ti + '" aria-pressed="' + (focusTopic === ti) + '" style="top:' + (t.y - 36) + 'px;--d:' + (160 + ti * 60) + 'ms" title="Highlight this branch">'
+        + '<span class="t">' + escape(t.title) + "</span>"
+        + '<span class="roll" style="color:' + st.strong + '"><span class="tri">' + mine.map((s) => '<span style="background:' + STATUS[s.status].bar + '"></span>').join("") + "</span>" + roll + "</span></button>";
+    });
+    subs.forEach((s) => {
+      html += subButton(s, "top:" + (s.y - 22) + "px;--d:" + (420 + s.i * 30) + "ms");
+    });
+    html += '<div class="pop" id="pop" role="dialog" aria-labelledby="pop-title" hidden></div>';
+    const board = $("board");
+    board.className = "board" + (firstDraw ? " intro" : "");
+    board.innerHTML = html;
+    fitBoard();
+  }
+
+  function subButton(s, style) {
+    const st = STATUS[s.status];
+    return '<button class="node sub' + (s.suggested ? " suggested" : "") + '" type="button" data-i="' + s.i + '" style="' + style + '" aria-label="' + escape(s.title + ", " + (s.latest == null ? "not tested" : s.latest + " percent, " + st.label)) + '">'
+      + '<span class="fill" aria-hidden="true" style="width:' + (firstDraw ? 0 : s.before || 0) + "%;background:" + st.tint + '"></span>'
+      + '<span class="name">' + escape(s.title) + "</span>"
+      + '<span class="score" style="color:' + st.strong + '">' + (s.latest == null ? "Not tested" : s.latest + "%") + "</span></button>";
+  }
+
+  // On phones the map becomes a list: each topic, then its subtopics, with details opening in place.
+  function drawTree() {
+    $("tree").innerHTML = home.topics.map((t, ti) => {
+      const st = STATUS[statusOf(t.weakest)];
+      return '<section class="tree-topic"><h3>' + escape(t.title) + '</h3><span class="roll" style="color:' + st.strong + '">'
+        + (t.weakest == null ? "Not tested yet" : "Weakest " + t.weakest + "%") + "</span>"
+        + subs.filter((s) => s.ti === ti).map((s) => subButton(s, "") + '<div class="detail" data-detail="' + s.i + '" hidden></div>').join("")
+        + "</section>";
+    }).join("");
+  }
+
+  // Scale the board down to fit narrower screens, without ever scaling it up.
+  function fitBoard() {
+    const wrap = $("board-wrap");
+    const room = wrap.clientWidth - 48;
+    const k = Math.min(1, room / W);
+    $("stage").style.width = W * k + "px";
+    $("stage").style.height = H * k + "px";
+    $("board").style.transform = "scale(" + k + ")";
+  }
+  new ResizeObserver(() => { if (home && !$("home").hidden) fitBoard(); }).observe($("board-wrap"));
+
+  function popContent(s) {
+    const st = STATUS[s.status];
+    let status = "Not tested yet";
+    if (s.latest != null) {
+      status = st.label + ": latest " + s.latest + "%";
+      if (s.best > s.latest) status += ", best " + s.best + "%";
+      status += ", " + s.tests + (s.tests === 1 ? " test" : " tests");
+    }
+    const concepts = s.concepts.length > 1 ? s.concepts.slice(0, -1).join(", ") + " and " + s.concepts.at(-1) : s.concepts.join("");
+    return '<div class="pop-head"><div><p class="pop-topic">' + escape(s.topic) + '</p><h3 id="pop-title">' + escape(s.title) + "</h3>"
+      + '<p class="pop-status" style="color:' + st.strong + '">' + status + '</p></div><button class="x" type="button" data-act="close" aria-label="Close">' + CLOSE + "</button></div>"
+      + '<p class="pop-covers">Covers ' + escape(concepts) + ".</p>"
+      + '<div class="pop-actions">'
+      + (s.notes_url
+        ? '<a class="pop-btn" href="' + escape(s.notes_url) + '" target="_blank" rel="noopener"><b>Revise</b><small>Open the notes in a new tab</small></a>'
+        : '<span class="pop-btn off"><b>Revise</b><small>Notes for this one are coming soon</small></span>')
+      + '<button class="pop-btn primary" type="button" data-act="test" data-i="' + s.i + '"><b>' + (s.latest == null ? "Test" : "Retake test") + "</b><small>" + s.questions + " questions, answered in chat</small></button>"
+      + "</div>";
+  }
+
+  function select(i, focusTest = true) {
+    selected = i;
+    const s = subs[i];
+    document.querySelectorAll(".sub").forEach((el) => el.classList.toggle("is-selected", +el.dataset.i === i));
+    document.querySelectorAll(".link[data-t]").forEach((el) => {
+      el.classList.toggle("on", el.dataset.s ? +el.dataset.s === i : +el.dataset.t === s.ti);
+    });
+    // Map: the popover sits beside the subtopic, kept inside the board.
+    const pop = $("pop");
+    pop.innerHTML = popContent(s);
+    pop.hidden = false;
+    const top = Math.max(0, Math.min(H - pop.offsetHeight, s.y - 64));
+    pop.style.top = top + "px";
+    const anchor = Math.min(top + pop.offsetHeight - 24, Math.max(top + 24, s.y));
+    $("pop-link").setAttribute("d", linkPath(SUB_X + SUB_W, s.y, POP_X, anchor));
+    // Phone list: the details open under the subtopic.
+    document.querySelectorAll("[data-detail]").forEach((el) => {
+      el.hidden = +el.dataset.detail !== i;
+      if (!el.hidden) el.innerHTML = popContent(s);
+    });
+    if (focusTest) pop.querySelector('[data-act="test"]')?.focus({ preventScroll: true });
+  }
+
+  function closePop() {
+    if (selected == null) return;
+    const i = selected;
+    selected = null;
+    $("pop").hidden = true;
+    $("pop-link").setAttribute("d", "");
+    document.querySelectorAll(".sub").forEach((el) => el.classList.remove("is-selected"));
+    document.querySelectorAll(".link[data-t]").forEach((el) => el.classList.remove("on"));
+    document.querySelectorAll("[data-detail]").forEach((el) => (el.hidden = true));
+    document.querySelector('.board .sub[data-i="' + i + '"]')?.focus({ preventScroll: true });
+  }
+
+  // Dim everything outside the legend colour or the topic branch you picked.
+  function applyHighlights() {
+    document.querySelectorAll(".chip").forEach((c) => c.setAttribute("aria-pressed", c.dataset.status === filter));
+    const keep = (s) => (!filter || s.status === filter) && (focusTopic == null || s.ti === focusTopic);
+    document.querySelectorAll(".sub[data-i]").forEach((el) => el.classList.toggle("dim", !keep(subs[el.dataset.i])));
+    document.querySelectorAll(".topic").forEach((el) => {
+      const ti = +el.dataset.topic;
+      el.setAttribute("aria-pressed", focusTopic === ti);
+      el.classList.toggle("dim", !subs.some((s) => s.ti === ti && keep(s)));
+    });
+    document.querySelectorAll(".link[data-s]").forEach((el) => el.classList.toggle("dim", !keep(subs[el.dataset.s])));
+    document.querySelectorAll(".link[data-t]:not([data-s])").forEach((el) => el.classList.toggle("dim", !subs.some((s) => s.ti === +el.dataset.t && keep(s))));
+  }
+
+  // One click handler for the whole home view.
+  $("home").addEventListener("click", (e) => {
+    const chip = e.target.closest(".chip");
+    if (chip) { filter = filter === chip.dataset.status ? null : chip.dataset.status; return applyHighlights(); }
+    const topic = e.target.closest(".topic");
+    if (topic) { focusTopic = focusTopic === +topic.dataset.topic ? null : +topic.dataset.topic; return applyHighlights(); }
+    const act = e.target.closest("[data-act]");
+    if (act) {
+      if (act.dataset.act === "close") return closePop();
+      if (act.dataset.act === "test") return start(subs[act.dataset.i].title);
+      if (act.dataset.act === "show") {
+        select(+act.dataset.i);
+        // Scroll to whichever copy is on screen: the map on wide screens, the list on phones.
+        const shown = [...document.querySelectorAll('.sub[data-i="' + act.dataset.i + '"]')].find((el) => el.offsetParent);
+        return shown?.scrollIntoView({ block: "center" });
+      }
+    }
+    const sub = e.target.closest(".sub[data-i]");
+    if (sub) return selected === +sub.dataset.i ? closePop() : select(+sub.dataset.i);
+    if (e.target.closest("#board") && !e.target.closest("#pop")) closePop();
   });
 
-  // Create: send one message, get the replies and the quiz state back.
-  // Address: /api/chat. Action: POST. Package: JSON. Key: none, it stays on the server.
+  // Hovering a subtopic traces its path back to the root.
+  $("board").addEventListener("mouseover", (e) => {
+    const sub = e.target.closest(".sub[data-i]");
+    document.querySelectorAll(".link.hover").forEach((el) => el.classList.remove("hover"));
+    if (!sub) return;
+    const s = subs[sub.dataset.i];
+    document.querySelectorAll('.link[data-s="' + s.i + '"], .link[data-t="' + s.ti + '"]:not([data-s])').forEach((el) => el.classList.add("hover"));
+  });
+  $("board").addEventListener("mouseleave", () => document.querySelectorAll(".link.hover").forEach((el) => el.classList.remove("hover")));
+
+  // Keyboard: up and down move between subtopics, Escape closes the details.
+  $("home").addEventListener("keydown", (e) => {
+    if (e.key === "Escape") return closePop();
+    const sub = e.target.closest(".board .sub[data-i]");
+    if (!sub || (e.key !== "ArrowDown" && e.key !== "ArrowUp")) return;
+    e.preventDefault();
+    const next = (+sub.dataset.i + (e.key === "ArrowDown" ? 1 : subs.length - 1)) % subs.length;
+    const el = document.querySelector('.board .sub[data-i="' + next + '"]');
+    el.focus();
+    select(next, false);
+  });
+
+  function toast(text) {
+    const t = $("toast");
+    t.textContent = text;
+    t.hidden = false;
+    clearTimeout(toast.timer);
+    toast.timer = setTimeout(() => (t.hidden = true), 4500);
+  }
+
+  // --- Test: the chat ---
+  let testId = null, subtopic = null;
+
+  function start(name) {
+    subtopic = name;
+    testId = null;
+    log.innerHTML = "";
+    showView("test");
+    $("title").textContent = name;
+    talk("start", false);
+  }
+
+  // Create: send one message, get the replies and the test's state back.
+  // Address: /api/chat. Action: POST. Package: JSON. Key: your login token, never the Groq key.
   async function talk(text, show = true) {
     if (show) addMine(text);
     const waiting = addRow('<p class="thinking">' + (show ? "Checking your answer…" : "Loading questions…") + "</p>");
@@ -210,14 +733,19 @@
     try {
       const r = await fetch("/api/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ session_id: sessionId, subtopic: $("subtopic").value, message: text }),
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+        body: JSON.stringify({ test_id: testId, subtopic: subtopic, message: text }),
       });
       const data = await r.json();
       waiting.remove();
+      if (r.status === 401) {
+        send.disabled = false;
+        return logOut(data.detail);
+      }
       if (!r.ok) {
         addRow('<p class="error">' + escape(r.status + ": " + (data.detail?.[0]?.msg || data.detail || "Something went wrong")) + "</p>");
       } else {
+        testId = data.test_id;
         data.messages.forEach(addBot);
         drawState(data.state);
         scrollDown();
@@ -275,10 +803,10 @@
       inner += '<p class="heading">The full answer</p><ul>' + m.key_points.map((k) =>
         "<li>" + escape(k.text) + (k.had ? ' <span class="had">(you had this)</span>' : "") + "</li>").join("") + "</ul>";
     }
-    const row = addRow('<div class="card ' + m.kind + '">' + inner + (m.kind === "done" ? '<div class="actions"><button class="btn primary" type="button" data-act="again">Try this set again</button><button class="btn" type="button" data-act="pick">Pick another subtopic</button></div>' : "") + "</div>", false);
+    const row = addRow('<div class="card ' + m.kind + '">' + inner + (m.kind === "done" ? '<div class="actions"><button class="btn primary" type="button" data-act="map">See it on the map</button><button class="btn" type="button" data-act="again">Try this set again</button></div>' : "") + "</div>", false);
     if (m.kind === "done") {
-      row.querySelector('[data-act="again"]').onclick = start;
-      row.querySelector('[data-act="pick"]').onclick = showPicker;
+      row.querySelector('[data-act="map"]').onclick = showHome;
+      row.querySelector('[data-act="again"]').onclick = () => start(subtopic);
     }
   }
 
@@ -317,33 +845,13 @@
     }).join("");
     $("notes").hidden = !s.notes_url;
     $("notes").href = s.notes_url || "#";
+    $("end").hidden = s.done;
   }
 
-  function start() {
-    sessionId = crypto.randomUUID();
-    log.innerHTML = "";
-    $("picker").hidden = true;
-    $("test").hidden = false;
-    $("back").hidden = false;
-    $("head-right").hidden = false;
-    talk("start", false);
-  }
-
-  function showPicker() {
-    sessionId = null;
-    $("picker").hidden = false;
-    $("test").hidden = true;
-    $("back").hidden = true;
-    $("head-right").hidden = true;
-    $("topic").textContent = "";
-    $("title").textContent = "Concept Check";
-  }
-
-  $("start").onclick = start;
   $("end").onclick = () => {
-    if (confirm("End this test? Your answers in this set won't be scored.")) showPicker();
+    if (confirm("End this test? Answers so far are saved, but the test won't get a score.")) showHome();
   };
-  $("back").onclick = (e) => { e.preventDefault(); showPicker(); };
+  $("back").onclick = (e) => { e.preventDefault(); showHome(); };
 
   $("form").onsubmit = (e) => {
     e.preventDefault();
@@ -384,6 +892,9 @@
       return html;
     }).join("");
   }
+
+  // Logged in already? Go straight to the map. Otherwise, log in first.
+  if (token) showHome(); else showLogin();
 </script>
 </body>
 </html>

@@ -24,8 +24,8 @@ Concept Check finds where a learner stops understanding and starts reciting. Pic
 
 ## The two interfaces
 
-- `public/index.html` is the page: a dropdown, a chat log, a text box, a button and one `fetch` to `/api/chat`. It holds no key.
-- `app.py` is the server. `GET /api/subtopics` lists the subtopics. `POST /api/chat` takes `{"session_id", "subtopic", "message"}` and returns `{"messages", "state"}`: the reply cards to show, and the quiz state the sidebar draws (results so far, score, current question, notes link). Pydantic rejects any other package with a 422. The Groq key lives only here, read from `.env` locally and from Vercel's environment variables in production.
+- `public/index.html` is the page: a log-in screen, the mind map home, and the chat test. It holds no key, only the learner's own login token.
+- `app.py` is the server. `POST /api/signup` and `POST /api/login` go through Supabase Auth and return a token. `GET /api/home` returns every topic and subtopic with the learner's latest and best score. `POST /api/chat` takes `{"session_id", "subtopic", "message"}` and returns `{"messages", "state"}`: the reply cards to show, and the quiz state the sidebar draws (results so far, score, current question, notes link). Pydantic rejects any other package with a 422. The Groq key lives only here, read from `.env` locally and from Vercel's environment variables in production.
 
 | Dial | `POST /api/chat` |
 |---|---|
@@ -33,6 +33,10 @@ Concept Check finds where a learner stops understanding and starts reciting. Pic
 | Action | POST |
 | Key | None from the browser. The server adds the Groq key itself |
 | Package | `{"session_id", "subtopic", "message"}` in, `{"messages", "state"}` out |
+
+## Storage
+
+Supabase holds two tables, created by `schema.sql`: `tests` (one row each time a learner presses Test, with where they are and the final score) and `attempts` (one row per question, with the points, the recited sentence and each follow-up's target key point). Learners and their hashed passwords live in Supabase Auth. `rest_check.py` exercises both tables with plain requests.
 
 ## How a set works
 
