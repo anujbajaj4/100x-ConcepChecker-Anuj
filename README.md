@@ -92,7 +92,7 @@ The model never decides on its own that a learner understands. A pass is always 
 - `prompts.py`: the four narrow prompts: label the explanation, write the follow-up, compare a short answer, walk through the answers.
 - `golden_pairs.json`: 24 ideas, 2 per subtopic. Each has an explain prompt and a simpler version, what understanding looks like, the common wrong idea, stock phrases, a follow-up seed, 2 practice cases and 2 real-world cases, each real-world case with the app screen it appears on.
 
-Quiz state is kept in the server's memory for now. It resets when the server restarts, and on Vercel a request can land on a fresh machine, so a quiz may lose its place there. Saving it to Supabase is next.
+Where a learner is in a test is saved in the `tests.state` column after every answer, so a test keeps its place across server restarts and Vercel machines. A guest's place travels with each message instead, checked by the server every time.
 
 ## Security
 
