@@ -7,10 +7,22 @@ Concept Check finds where a learner stops understanding and starts reciting. Pic
 ```bash
 pip install -r requirements.txt
 export GROQ_API_KEY=gsk_your_key_here
-python app.py
+uvicorn api.index:app --reload
 ```
 
-Then open the local link Gradio prints, pick a subtopic and send any message to start.
+Then open http://127.0.0.1:8000, pick a subtopic and press Start test.
+
+## The two interfaces
+
+- `public/index.html` is the page: a dropdown, a chat log, a text box, a button and one `fetch` to `/api/chat`. It holds no key.
+- `api/index.py` is the server. `GET /api/subtopics` lists the subtopics. `POST /api/chat` takes `{"session_id", "subtopic", "message"}` and returns `{"reply"}`. Pydantic rejects any other package with a 422. The Groq key lives only here, in an environment variable.
+
+| Dial | `POST /api/chat` |
+|---|---|
+| Address | `/api/chat`, same origin as the page |
+| Action | POST |
+| Key | None from the browser. The server adds the Groq key itself |
+| Package | `{"session_id", "subtopic", "message"}` in, `{"reply"}` out |
 
 ## How a set works
 
@@ -32,8 +44,9 @@ The model never decides on its own that a learner understands. The answer key is
 
 ## Files
 
-- `app.py`: the Gradio chat, the Groq call and the scoring.
-- `prompts.py`: the grader prompt.
+- `public/index.html`: the chat page.
+- `api/index.py`: the FastAPI routes, the Groq call and the scoring.
+- `prompts.py`: the grader, follow-up and explanation prompts.
 - `golden_pairs.json`: 54 questions with key points and pass rules across 12 subtopics.
 
-Scores are kept in memory for now and reset when the app restarts. Saving them to Supabase is next.
+Quiz state is kept in the server's memory for now. It resets when the server restarts, and on Vercel a request can land on a fresh machine, so a quiz may lose its place there. Saving it to Supabase is next.

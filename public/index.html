@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Concept Check</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --ink: #1E2B45; --muted: #566175; --line: #D5DBE3; --ground: #F4F6F9; --mine: #E8EDF4; --red: #A8321C; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--ground); color: var(--ink); font: 16px/1.6 'Schibsted Grotesk', system-ui, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 24px 16px 40px; display: flex; flex-direction: column; gap: 16px; min-height: 100vh; }
+  h1 { margin: 0; font-size: 26px; letter-spacing: -0.02em; }
+  .bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
+  label { display: flex; flex-direction: column; gap: 4px; font-size: 14px; font-weight: 600; }
+  select, textarea { font: inherit; color: inherit; border: 1.5px solid var(--ink); border-radius: 8px; background: #fff; padding: 10px 12px; }
+  button { font: inherit; font-weight: 600; min-height: 44px; padding: 0 18px; border: none; border-radius: 8px; background: var(--ink); color: #fff; cursor: pointer; }
+  button:disabled { opacity: 0.5; cursor: wait; }
+  :focus-visible { outline: 2px solid #2F5BD3; outline-offset: 2px; }
+  #log { flex: 1; display: flex; flex-direction: column; gap: 14px; background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 20px; }
+  #log:empty::before { content: "Pick a subtopic and press Start test."; color: var(--muted); }
+  .msg p { margin: 0 0 8px; } .msg p:last-child { margin: 0; }
+  .msg ul { margin: 0 0 8px; padding-left: 20px; }
+  .msg blockquote { margin: 0 0 8px; padding: 0; text-decoration: underline wavy var(--red); text-underline-offset: 5px; }
+  .mine { align-self: flex-end; max-width: 85%; background: var(--mine); padding: 10px 14px; border-radius: 14px 14px 4px 14px; white-space: pre-wrap; }
+  .error { color: var(--red); font-weight: 600; }
+  form { display: flex; gap: 10px; align-items: end; }
+  form textarea { flex: 1; resize: vertical; min-height: 52px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Concept Check</h1>
+
+  <div class="bar">
+    <label>Subtopic
+      <select id="subtopic"></select>
+    </label>
+    <button id="start" type="button">Start test</button>
+  </div>
+
+  <div id="log" aria-live="polite"></div>
+
+  <form id="form">
+    <label style="flex: 1">Your answer
+      <textarea id="message" rows="2" placeholder="Explain it the way you'd tell a classmate"></textarea>
+    </label>
+    <button id="send" type="submit">Send</button>
+  </form>
+</main>
+
+<script>
+  // One id per quiz, so the server can tell your quiz from someone else's.
+  let sessionId = crypto.randomUUID();
+  const log = document.getElementById("log");
+  const subtopic = document.getElementById("subtopic");
+  const message = document.getElementById("message");
+  const send = document.getElementById("send");
+
+  // Read: fill the dropdown from the server.
+  fetch("/api/subtopics")
+    .then((r) => r.json())
+    .then((data) => {
+      for (const name of data.subtopics) subtopic.add(new Option(name, name));
+    });
+
+  // Create: send one message, get one reply.
+  // Address: /api/chat. Action: POST. Package: JSON. Key: none, it stays on the server.
+  async function talk(text, show = true) {
+    if (show) addMessage(text, "mine");
+    send.disabled = true;
+    try {
+      const r = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_id: sessionId, subtopic: subtopic.value, message: text }),
+      });
+      const data = await r.json();
+      if (r.ok) addMessage(data.reply, "bot");
+      else addMessage(r.status + ": " + (data.detail || "Something went wrong"), "error");
+    } catch {
+      addMessage("Could not reach the server. Is it running?", "error");
+    }
+    send.disabled = false;
+    message.focus();
+  }
+
+  function addMessage(text, kind) {
+    const div = document.createElement("div");
+    div.className = "msg " + kind;
+    if (kind === "bot") div.innerHTML = render(text);
+    else div.textContent = text;
+    log.append(div);
+    div.scrollIntoView({ behavior: "smooth", block: "end" });
+  }
+
+  // Just enough Markdown for the replies: **bold**, *italic*, "> quote" and "- list".
+  // Escape first, so nothing in a reply can run as HTML.
+  function render(text) {
+    const escape = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const inline = (s) => escape(s).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/\*(.+?)\*/g, "<em>$1</em>");
+    return text.split(/\n{2,}/).map((block) => {
+      if (block.startsWith("> ")) return "<blockquote>" + inline(block.slice(2)) + "</blockquote>";
+      // Text lines become a paragraph; a run of "- " lines becomes a list.
+      let html = "", text = [], items = [];
+      const flush = () => {
+        if (text.length) html += "<p>" + text.map(inline).join("<br>") + "</p>";
+        if (items.length) html += "<ul>" + items.map((i) => "<li>" + inline(i) + "</li>").join("") + "</ul>";
+        text = []; items = [];
+      };
+      for (const line of block.split("\n")) {
+        if (line.startsWith("- ")) { if (text.length) flush(); items.push(line.slice(2)); }
+        else { if (items.length) flush(); text.push(line); }
+      }
+      flush();
+      return html;
+    }).join("");
+  }
+
+  document.getElementById("start").onclick = () => {
+    sessionId = crypto.randomUUID();
+    log.innerHTML = "";
+    talk("start", false);
+  };
+
+  document.getElementById("form").onsubmit = (e) => {
+    e.preventDefault();
+    const text = message.value.trim();
+    if (!text) return;
+    message.value = "";
+    talk(text);
+  };
+
+  // Enter sends, Shift+Enter adds a line.
+  message.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      document.getElementById("form").requestSubmit();
+    }
+  });
+</script>
+</body>
+</html>

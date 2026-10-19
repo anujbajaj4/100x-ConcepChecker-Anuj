@@ -1,16 +1,24 @@
 import json
 import os
-import requests
-import gradio as gr
+import sys
+from pathlib import Path
 
+import requests
+from fastapi import FastAPI, HTTPException
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
+
+# The project root holds prompts.py, golden_pairs.json and public/.
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
 from prompts import EXPLAIN_PROMPT, FOLLOW_UP_PROMPT, GRADER_PROMPT
 
-PAIRS = json.load(open("golden_pairs.json"))["pairs"]
+PAIRS = json.load(open(ROOT / "golden_pairs.json"))["pairs"]
 SUBTOPICS = list(dict.fromkeys(p["subtopic"] for p in PAIRS))
 MAX_FOLLOW_UPS = 2
 
-# One quiz per browser tab, kept in memory. It resets when the app restarts.
-# Saving scores to Supabase comes next.
+# One quiz per browser tab, kept in memory. It resets when the server restarts,
+# and on Vercel each request may land on a fresh machine. Supabase fixes both.
 SESSIONS = {}
 
 
@@ -28,7 +36,8 @@ def ask_groq(system, user):
         },
     )
     if r.status_code != 200:
-        raise gr.Error(f"Groq replied {r.status_code}: {r.text[:200]}")
+        # 502: our server is fine, the machine behind it failed.
+        raise HTTPException(502, f"Groq replied {r.status_code}: {r.text[:200]}")
     return json.loads(r.json()["choices"][0]["message"]["content"])
 
 
@@ -123,8 +132,8 @@ def next_question(s, points, reply):
     return reply + "\n\n" + finish(s)
 
 
-def respond(message, history, subtopic, request: gr.Request):
-    s = SESSIONS.get(request.session_hash)
+def respond(session_id, subtopic, message):
+    s = SESSIONS.get(session_id)
 
     # Start a new set: first message, a new subtopic, or the last set is done.
     if s is None or s["subtopic"] != subtopic or s["index"] >= len(s["pairs"]):
@@ -138,7 +147,7 @@ def respond(message, history, subtopic, request: gr.Request):
             "follow_ups": 0,
             "waiting": False,
         }
-        SESSIONS[request.session_hash] = s
+        SESSIONS[session_id] = s
         return (
             f"**{subtopic}**: {len(s['pairs'])} questions. "
             "Answer in your own words, the way you'd explain it to a classmate.\n\n" + ask(s)
@@ -192,14 +201,28 @@ def respond(message, history, subtopic, request: gr.Request):
     return next_question(s, 0, reply)
 
 
-demo = gr.ChatInterface(
-    fn=respond,
-    title="Concept Check",
-    description="Pick a subtopic, then send any message to start.",
-    textbox=gr.Textbox(placeholder="Explain it the way you'd tell a classmate"),
-    additional_inputs=[gr.Dropdown(SUBTOPICS, value=SUBTOPICS[0], label="Subtopic")],
-    additional_inputs_accordion=gr.Accordion("Subtopic", open=True),
-)
+app = FastAPI()
 
-if __name__ == "__main__":
-    demo.launch()
+
+# The traffic police: a chat package must carry these three, as text.
+class ChatIn(BaseModel):
+    session_id: str
+    subtopic: str
+    message: str
+
+
+@app.get("/api/subtopics")
+def subtopics_route():
+    return {"subtopics": SUBTOPICS}
+
+
+@app.post("/api/chat")
+def chat_route(body: ChatIn):
+    if body.subtopic not in SUBTOPICS:
+        raise HTTPException(400, "Unknown subtopic: " + body.subtopic)
+    return {"reply": respond(body.session_id, body.subtopic, body.message)}
+
+
+# Locally, serve the page too. On Vercel, public/ is served on its own.
+if (ROOT / "public").exists():
+    app.mount("/", StaticFiles(directory=ROOT / "public", html=True), name="public")
