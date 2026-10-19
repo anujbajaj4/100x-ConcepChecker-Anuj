@@ -28,11 +28,13 @@ L5 = "https://100x-curriculum.vercel.app/c8/module-2/lecture-05-building-apis/no
 L6 = "https://100x-curriculum.vercel.app/c8/module-2/lecture-06-databases-and-domain-modelling/notes"
 L7 = "https://100x-curriculum.vercel.app/c8/module-2/lecture-07-connect-backend-to-the-database/notes"
 L8 = "https://100x-curriculum.vercel.app/c8/module-2/lecture-08-end-to-end-mvp/notes"
-# Revise links per subtopic. Empty ones are still to be filled in.
+# The 100xEngineers Labs Resources doc, one link per tab.
+LABS = "https://docs.google.com/document/d/1hmt3C81bok7wzrSx2nn1xEvJleeBbumnyQugXcklETg/edit?tab="
+# Revise links per subtopic.
 NOTES = {
-    "Designing a Good Spec": "",
-    "Golden Dataset and Verifiers": "",
-    "Building the UI": "",
+    "Designing a Good Spec": LABS + "t.oplctwoftgnj",       # Discovery Document (Aarav's example)
+    "Golden Dataset and Verifiers": L5,                     # no tab covers this; Lecture 5, "The Verifier Most People Skipped"
+    "Building the UI": LABS + "t.tuwo8ndt75pq",             # MVP Plan (Aarav's example)
     "Anatomy of an API Request": L4,
     "HTTP Methods (CRUD)": L4,
     "Status Codes": L4,
