@@ -73,6 +73,7 @@ Quiz state is kept in the server's memory for now. It resets when the server res
 | Keys | The browser holds no key. `app.py` uses only Supabase's publishable key plus each learner's own token, and the Groq key. The secret key is for the admin scripts and never goes to Vercel. `.env` is git-ignored. |
 | Who are you | Every `/api/chat` and `/api/home` request checks the learner's token with Supabase: no token or an expired one gets 401. Opening a test that isn't yours gets 403. |
 | Rows | `security.sql` turns on row level security policies: a learner can read, start and update only their own tests and attempts, and nobody can delete. `python3 rls_check.py` proves it with two practice learners. The login token sits in an HttpOnly cookie the page can't read, and quiz state lives on the server. |
+| Packages | Pydantic checks every package before any route code runs: the right fields and types, length limits (a message is 1 to 2,000 characters), and no extra fields. Anything else gets 400 with the rule it broke. `security.sql` adds the same kind of rules inside Postgres, such as points being 0, 0.5 or 1. |
 
 ### If a key leaks
 

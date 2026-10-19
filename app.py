@@ -6,8 +6,10 @@ from pathlib import Path
 import requests
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 from supabase import ClientOptions, create_client
 
 from prompts import EXPLAIN_PROMPT, FOLLOW_UP_PROMPT, GRADER_PROMPT
@@ -401,17 +403,34 @@ def start_session(request, response, data):
 app = FastAPI()
 
 
-# The traffic police for login: an email and a password, both text.
+# --- The traffic police ------------------------------------------------------------
+# Every package is checked before any route code runs: the right fields, the right
+# types, sensible lengths, and nothing extra. Anything else is turned back with a 400
+# that names the rule it broke.
 class LoginIn(BaseModel):
-    email: str
-    password: str
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    email: str = Field(max_length=254, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+    password: str = Field(min_length=6, max_length=72)
 
 
-# The traffic police for chat: which test (none yet means "start one"), the subtopic and the message.
 class ChatIn(BaseModel):
-    test_id: int | None = None
-    subtopic: str
-    message: str
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    test_id: int | None = Field(default=None, gt=0)       # none yet means "start one"
+    subtopic: str = Field(max_length=100)
+    message: str = Field(min_length=1, max_length=2000)  # long enough to explain, short enough to stop abuse
+
+
+@app.exception_handler(RequestValidationError)
+def bad_package(request, exc):
+    first = exc.errors()[0]
+    field = ".".join(str(part) for part in first["loc"] if part != "body")
+    if first["type"] == "json_invalid":
+        reason = "The package isn't valid JSON."
+    elif first["type"] == "string_pattern_mismatch" and field == "email":
+        reason = "That doesn't look like an email address."
+    else:
+        reason = (field + ": " if field else "") + first["msg"]
+    return JSONResponse(status_code=400, content={"detail": reason})
 
 
 @app.post("/api/signup")
