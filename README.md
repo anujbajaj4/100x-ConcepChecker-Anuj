@@ -74,6 +74,7 @@ Quiz state is kept in the server's memory for now. It resets when the server res
 | Who are you | Every `/api/chat` and `/api/home` request checks the learner's token with Supabase: no token or an expired one gets 401. Opening a test that isn't yours gets 403. |
 | Rows | `security.sql` turns on row level security policies: a learner can read, start and update only their own tests and attempts, and nobody can delete. `python3 rls_check.py` proves it with two practice learners. The login token sits in an HttpOnly cookie the page can't read, and quiz state lives on the server. |
 | Packages | Pydantic checks every package before any route code runs: the right fields and types, length limits (a message is 1 to 2,000 characters), and no extra fields. Anything else gets 400 with the rule it broke. `security.sql` adds the same kind of rules inside Postgres, such as points being 0, 0.5 or 1. |
+| Limits | Too many requests get 429 with a Retry-After: 10 log-ins a minute per IP address, 15 answers a minute and 60 map loads a minute per learner, and 10 tests a day per learner (counted in Supabase, so it holds across Vercel machines). Groq's own 429 is passed on with its wait time. The per-minute counters live in each server's memory. |
 
 ### If a key leaks
 

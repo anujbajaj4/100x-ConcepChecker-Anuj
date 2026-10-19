@@ -1,6 +1,8 @@
 import json
 import os
-from datetime import datetime, timezone
+import time
+from collections import defaultdict, deque
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import requests
@@ -106,10 +108,17 @@ def ask_groq(system, user):
             ],
             "response_format": {"type": "json_object"},
         },
+        timeout=60,
     )
+    if r.status_code == 429:
+        # Groq's free tier: 30 requests a minute and 1,000 a day, shared by every learner.
+        # Pass its 429 on, with how long to wait, instead of retrying and making it worse.
+        wait = r.headers.get("retry-after", "30")
+        raise HTTPException(429, f"The AI is handling too many requests right now. Try again in {wait} seconds.", headers={"Retry-After": wait})
     if r.status_code != 200:
-        # 502: our server is fine, the machine behind it failed.
-        raise HTTPException(502, f"Groq replied {r.status_code}: {r.text[:200]}")
+        # 502: our server is fine, the machine behind it failed. Its error text stays in our logs, not the page.
+        print("Groq error", r.status_code, r.text[:300])
+        raise HTTPException(502, f"The AI service replied {r.status_code}. Try again in a moment.")
     return json.loads(r.json()["choices"][0]["message"]["content"])
 
 
@@ -383,6 +392,47 @@ def current_user(request):
     return user
 
 
+# --- Rate limits -------------------------------------------------------------------
+# A sliding window: remember when each caller last hit us, and turn them back with
+# 429 and a Retry-After once they go over. These counters live in this server's
+# memory, so on Vercel each machine keeps its own; the daily test cap below is
+# counted in Supabase, so it holds everywhere.
+LOGINS_PER_MINUTE = 10    # per IP address, against password guessing
+ANSWERS_PER_MINUTE = 15   # per learner, each answer can mean up to three Groq calls
+PAGES_PER_MINUTE = 60     # per learner, for the map
+TESTS_PER_DAY = 10        # per learner, to share Groq's 1,000 requests a day
+WINDOWS = defaultdict(deque)
+
+
+def limit(key, most, seconds):
+    now = time.monotonic()
+    hits = WINDOWS[key]
+    while hits and hits[0] <= now - seconds:
+        hits.popleft()
+    if len(hits) >= most:
+        wait = int(hits[0] + seconds - now) + 1
+        raise HTTPException(429, f"Too many requests. Try again in {wait} seconds.", headers={"Retry-After": str(wait)})
+    hits.append(now)
+
+
+def client_ip(request):
+    # Behind Vercel, the caller's real address is the first one in this header.
+    forwarded = request.headers.get("x-forwarded-for", "")
+    return forwarded.split(",")[0].strip() or (request.client.host if request.client else "unknown")
+
+
+def check_daily_tests(db):
+    midnight = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    # Row level security means this only counts this learner's own tests.
+    started = db.table("tests").select("id", count="exact").gte("created_at", midnight.isoformat()).execute().count or 0
+    if started >= TESTS_PER_DAY:
+        wait = int((midnight + timedelta(days=1) - datetime.now(timezone.utc)).total_seconds())
+        raise HTTPException(
+            429, f"You've started {TESTS_PER_DAY} tests today, the daily limit. It resets at midnight UTC (5:30 am IST).",
+            headers={"Retry-After": str(wait)},
+        )
+
+
 def is_https(request):
     # Vercel ends HTTPS at its edge and tells us so in this header.
     return request.url.scheme == "https" or request.headers.get("x-forwarded-proto") == "https"
@@ -435,6 +485,7 @@ def bad_package(request, exc):
 
 @app.post("/api/signup")
 def signup_route(body: LoginIn, request: Request, response: Response):
+    limit("login:" + client_ip(request), LOGINS_PER_MINUTE, 60)
     r = supabase_auth("POST", "/signup", json={"email": body.email, "password": body.password})
     if not r.ok:
         raise auth_error(r)
@@ -447,6 +498,7 @@ def signup_route(body: LoginIn, request: Request, response: Response):
 
 @app.post("/api/login")
 def login_route(body: LoginIn, request: Request, response: Response):
+    limit("login:" + client_ip(request), LOGINS_PER_MINUTE, 60)
     r = supabase_auth("POST", "/token?grant_type=password", json={"email": body.email, "password": body.password})
     if not r.ok:
         raise auth_error(r)
@@ -465,12 +517,14 @@ def logout_route(request: Request, response: Response):
 @app.post("/api/chat")
 def chat_route(body: ChatIn, request: Request):
     user = current_user(request)  # 401 here if the learner isn't logged in
+    limit("answers:" + user["id"], ANSWERS_PER_MINUTE, 60)  # 429 here if they're sending too fast
     if body.subtopic not in SUBTOPICS:
         raise HTTPException(400, "Unknown subtopic: " + body.subtopic)
     db = learner_db(user["token"])
 
     # No test yet: create the row, and its id is how the page refers to this test from now on.
     if body.test_id is None:
+        check_daily_tests(db)  # 429 here after the day's tenth test
         s = new_test(body.subtopic)
         row = db.table("tests").insert({"user_id": user["id"], "subtopic": body.subtopic, "state": stored(s)}).execute().data[0]
         return {"test_id": row["id"], "messages": [intro(s), question(s)], "state": state(s)}
@@ -492,6 +546,7 @@ def chat_route(body: ChatIn, request: Request):
 @app.get("/api/home")
 def home_route(request: Request):
     user = current_user(request)
+    limit("pages:" + user["id"], PAGES_PER_MINUTE, 60)
     finished = (
         learner_db(user["token"]).table("tests").select("subtopic, score, completed_at")
         .eq("user_id", user["id"]).not_.is_("completed_at", "null")
