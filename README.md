@@ -69,7 +69,7 @@ Each subtopic has two ideas, and every idea runs the same loop, taken from the h
 There are two segments:
 
 - **Practice** uses cases set in Aarav's world. It's never scored, so learners who are still catching up can repeat it as often as they like.
-- **Real-world test** asks the same ideas inside apps people use every day: UPI, Swiggy, IRCTC, WhatsApp, banks. Only this segment's score colours the map: 80% and up is Mastered, 50 to 79% is Getting there, under 50% is Needs work.
+- **Real-world test** asks the same ideas inside apps people use every day: UPI, Swiggy, IRCTC, WhatsApp, banks. Each case arrives as that app's screen (a UPI payment, an IRCTC error, a WhatsApp chat), drawn from a few kinds of block stored with the case in `golden_pairs.json` and checked when the server starts. The screen only sets the scene: the learner still types the answer, and no screen shows it. Only this segment's score colours the map: 80% and up is Mastered, 50 to 79% is Getting there, under 50% is Needs work.
 
 ## Who decides what
 
@@ -90,7 +90,7 @@ The model never decides on its own that a learner understands. A pass is always 
 - `rest_check.py` and `rls_check.py`: plain-request checks of the tables and of row level security.
 - `vercel.json`: the security headers for the page on Vercel.
 - `prompts.py`: the four narrow prompts: label the explanation, write the follow-up, compare a short answer, walk through the answers.
-- `golden_pairs.json`: 24 ideas, 2 per subtopic. Each has an explain prompt and a simpler version, what understanding looks like, the common wrong idea, stock phrases, a follow-up seed, 2 practice cases and 2 real-world cases.
+- `golden_pairs.json`: 24 ideas, 2 per subtopic. Each has an explain prompt and a simpler version, what understanding looks like, the common wrong idea, stock phrases, a follow-up seed, 2 practice cases and 2 real-world cases, each real-world case with the app screen it appears on.
 
 Quiz state is kept in the server's memory for now. It resets when the server restarts, and on Vercel a request can land on a fresh machine, so a quiz may lose its place there. Saving it to Supabase is next.
 

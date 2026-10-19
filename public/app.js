@@ -592,7 +592,7 @@ function addBot(m) {
   }
   if (m.kind === "case") {
     log.querySelectorAll(".simpler-actions").forEach((el) => el.remove());
-    return addRow('<span class="label">' + escape(m.label) + "</span>" + render(m.text));
+    return addRow('<span class="label">' + escape(m.label) + "</span>" + (m.screen ? drawScreen(m.screen) : "") + render(m.text));
   }
   if (m.kind === "next") {
     const row = addRow(render(m.text) + '<div class="actions next-actions"><button class="btn" type="button">Next idea</button></div>', false);
@@ -623,6 +623,35 @@ function addBot(m) {
 }
 
 // Underline the quoted sentence inside the message where you wrote it.
+// A real-world case's screen: the app it happens in, built from a few kinds of block.
+// It only sets the scene; the question under it is what the learner answers, by typing.
+function drawScreen(sc) {
+  const e = escape;
+  const block = (b) => {
+    switch (b.t) {
+      case "head": return '<div class="s-head"><b>' + e(b.text) + "</b>" + (b.sub ? "<small>" + e(b.sub) + "</small>" : "") + "</div>";
+      case "person": return '<div class="s-person"><span class="s-avatar">' + e(b.initials) + "</span><div><b>" + e(b.name) + "</b><small>" + e(b.sub) + "</small></div></div>";
+      case "amount": return '<p class="s-amount">' + e(b.text) + "</p>";
+      case "pin": return '<div class="s-pin"><small>' + e(b.label) + '</small><span><i class="on"></i><i class="on"></i><i></i><i></i></span></div>';
+      case "line": return '<div class="s-line"><span>' + e(b.label) + "</span><b>" + e(b.value) + "</b></div>";
+      case "alert": return '<div class="s-alert ' + e(b.tone) + '"><b>' + e(b.title) + "</b>" + (b.text ? "<span>" + e(b.text) + "</span>" : "") + "</div>";
+      case "msg": return '<div class="s-msg ' + (b.from === "me" ? "me" : "them") + '">' + (b.name ? "<small>" + e(b.name) + "</small>" : "") + e(b.text) + "</div>";
+      case "code": return '<pre class="s-code">' + e(b.text) + "</pre>";
+      case "field": return '<div class="s-field' + (b.bad ? " bad" : "") + '"><small>' + e(b.label) + "</small><span>" + e(b.value) + "</span></div>";
+      case "button": return '<div class="s-button">' + e(b.text) + "</div>";
+      case "note": return '<p class="s-note ' + e(b.tone || "") + '">' + e(b.text) + "</p>";
+      case "text": return '<p class="s-text">' + e(b.text) + "</p>";
+      case "empty": return '<p class="s-empty">' + e(b.text) + "</p>";
+      case "list": return '<ul class="s-list">' + b.items.map((i) => "<li><div>" + e(i.text) + (i.sub ? "<small>" + e(i.sub) + "</small>" : "") + "</div>" + (i.right ? "<b>" + e(i.right) + "</b>" : "") + "</li>").join("") + "</ul>";
+      case "table": return '<div class="s-table"><small>' + e(b.name) + "</small><table><tr>" + b.cols.map((c) => "<th>" + e(c) + "</th>").join("") + "</tr>"
+        + b.rows.map((r) => "<tr>" + r.map((c) => "<td>" + e(c) + "</td>").join("") + "</tr>").join("") + "</table></div>";
+      default: return "";
+    }
+  };
+  return '<figure class="screen" aria-label="' + e(sc.app) + ' screen"><div class="s-bar"><span>' + e(sc.app) + "</span>" + (sc.bar ? "<span>" + e(sc.bar) + "</span>" : "") + "</div>"
+    + '<div class="s-body">' + sc.blocks.map(block).join("") + "</div></figure>";
+}
+
 function markQuote(quote) {
   const bubble = [...log.querySelectorAll(".mine")].reverse().find((b) => b.textContent.includes(quote));
   if (!bubble) return;

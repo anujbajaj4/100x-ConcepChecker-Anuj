@@ -190,6 +190,46 @@
   .card.done { background: var(--card); border-color: var(--ink); }
   .card .had { color: var(--green); font-style: italic; }
   .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+
+  /* A real-world case's app screen: a small phone card above the question. */
+  .screen { margin: 6px 0 4px; width: 100%; max-width: 320px; border: 1px solid var(--line-strong); border-radius: 18px; background: var(--card); overflow: hidden; font-size: 14px; line-height: 1.45; color: var(--ink); }
+  .s-bar { display: flex; justify-content: space-between; gap: 8px; padding: 8px 14px; background: var(--soft-bg); border-bottom: 1px solid var(--line); font-size: 12.5px; font-weight: 600; color: var(--muted); }
+  .s-body { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 10px; }
+  .screen p, .screen pre, .screen ul, .screen figure { margin: 0; }
+  .screen small { display: block; font-size: 12.5px; color: var(--muted); font-weight: 400; }
+  .s-head b { font-size: 15px; }
+  .s-person { display: flex; align-items: center; gap: 10px; }
+  .s-avatar { flex: none; width: 36px; height: 36px; border-radius: 50%; background: var(--mine); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; }
+  .s-amount { font-size: 26px; font-weight: 700; text-align: center; letter-spacing: -0.01em; }
+  .s-pin { text-align: center; padding-top: 8px; border-top: 1px solid var(--line); }
+  .s-pin span { display: inline-flex; gap: 8px; margin-top: 4px; }
+  .s-pin i { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid var(--line-strong); }
+  .s-pin i.on { background: var(--ink); border-color: var(--ink); }
+  .s-line { display: flex; justify-content: space-between; gap: 12px; padding-bottom: 6px; border-bottom: 1px dashed var(--line); }
+  .s-line span { color: var(--text); } .s-line b { font-weight: 600; text-align: right; }
+  .s-alert { padding: 10px 12px; border-radius: 10px; display: flex; flex-direction: column; gap: 2px; }
+  .s-alert span { font-size: 13px; }
+  .s-alert.bad { background: #FBEDEA; color: var(--red); }
+  .s-alert.warn { background: var(--amber-bg); color: var(--amber); }
+  .s-alert.good { background: var(--green-bg); color: var(--green); }
+  .s-msg { max-width: 88%; padding: 8px 11px; border-radius: 12px 12px 12px 4px; background: var(--soft-bg); }
+  .s-msg.me { align-self: flex-end; border-radius: 12px 12px 4px 12px; background: var(--mine); }
+  .s-msg small { font-weight: 600; }
+  .s-code { padding: 10px 12px; border-radius: 8px; background: #1E2B45; color: #E8EDF4; font: 12.5px/1.5 ui-monospace, Menlo, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .s-field { padding: 6px 10px; border: 1px solid var(--line-strong); border-radius: 8px; }
+  .s-field.bad { border-color: var(--red); }
+  .s-button { padding: 9px; border-radius: 8px; background: var(--ink); color: #fff; text-align: center; font-weight: 600; }
+  .s-note { font-size: 12.5px; color: var(--muted); }
+  .s-note.good { color: var(--green); }
+  .s-empty { padding: 18px 0; text-align: center; color: var(--muted); }
+  .s-list { padding: 0; list-style: none; }
+  .s-list li { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--line); }
+  .s-list li:last-child { border-bottom: none; }
+  .s-list b { font-weight: 600; white-space: nowrap; }
+  .s-table table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 2px; }
+  .s-table small { font: 600 12.5px ui-monospace, Menlo, monospace; color: var(--ink); }
+  .s-table th, .s-table td { text-align: left; padding: 4px 6px; border: 1px solid var(--line); }
+  .s-table th { background: var(--soft-bg); font: 600 12px ui-monospace, Menlo, monospace; }
   .error { color: var(--red); font-weight: 600; }
 
   /* Answer box */

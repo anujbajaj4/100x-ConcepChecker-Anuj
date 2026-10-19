@@ -61,7 +61,29 @@
           "reject": [
             "traffic",
             "first"
-          ]
+          ],
+          "screen": {
+            "app": "WhatsApp",
+            "blocks": [
+              {
+                "t": "head",
+                "text": "College gang",
+                "sub": "3 participants"
+              },
+              {
+                "t": "msg",
+                "from": "them",
+                "text": "We should build an app to fix Indian traffic. Huge market.",
+                "name": "Kabir"
+              },
+              {
+                "t": "msg",
+                "from": "them",
+                "text": "My mom spends 20 minutes every single day finding parking at the market.",
+                "name": "Meera"
+              }
+            ]
+          }
         },
         {
           "scenario": "A startup says, 'Everyone hates paperwork, let's use AI for it.' What are they missing before they can test anything?",
@@ -80,7 +102,26 @@
             "funding",
             "investors",
             "ai model"
-          ]
+          ],
+          "screen": {
+            "app": "LinkedIn",
+            "blocks": [
+              {
+                "t": "person",
+                "initials": "PF",
+                "name": "PaperFree AI",
+                "sub": "Startup · 2,140 followers"
+              },
+              {
+                "t": "text",
+                "text": "Everyone hates paperwork. So we're using AI for it. Launching soon."
+              },
+              {
+                "t": "note",
+                "text": "312 likes · 48 comments"
+              }
+            ]
+          }
         }
       ],
       "source": "Aarav Reference Document, Discovery Document tab; Lecture 4 notes"
@@ -147,7 +188,32 @@
           "reject": [
             "it passed",
             "it failed"
-          ]
+          ],
+          "screen": {
+            "app": "Gym dashboard",
+            "blocks": [
+              {
+                "t": "head",
+                "text": "FitZone app launch",
+                "sub": "Month 1 report"
+              },
+              {
+                "t": "line",
+                "label": "The claim",
+                "value": "Members will love our new app"
+              },
+              {
+                "t": "line",
+                "label": "Members",
+                "value": "10"
+              },
+              {
+                "t": "line",
+                "label": "Open it weekly",
+                "value": "4"
+              }
+            ]
+          }
         },
         {
           "scenario": "A cafe's test: 'At least 30 of 100 customers will order the new coffee.' 22 order it. Pass or fail?",
@@ -159,7 +225,32 @@
           "reject": [
             "pass",
             "passed"
-          ]
+          ],
+          "screen": {
+            "app": "Café notes",
+            "blocks": [
+              {
+                "t": "head",
+                "text": "New coffee test",
+                "sub": "This week"
+              },
+              {
+                "t": "line",
+                "label": "Test",
+                "value": "At least 30 of 100 customers order it"
+              },
+              {
+                "t": "line",
+                "label": "Customers",
+                "value": "100"
+              },
+              {
+                "t": "line",
+                "label": "Ordered the new coffee",
+                "value": "22"
+              }
+            ]
+          }
         }
       ],
       "source": "Lecture 8 notes (the 6 of 10 bet); Aarav Reference Document, Discovery Document tab"
@@ -214,7 +305,31 @@
           ],
           "reject": [
             "after"
-          ]
+          ],
+          "screen": {
+            "app": "School portal",
+            "blocks": [
+              {
+                "t": "head",
+                "text": "Class 9 science test",
+                "sub": "Marking"
+              },
+              {
+                "t": "line",
+                "label": "Answer sheets",
+                "value": "40"
+              },
+              {
+                "t": "line",
+                "label": "Marked",
+                "value": "0 of 40"
+              },
+              {
+                "t": "button",
+                "text": "Start marking"
+              }
+            ]
+          }
         },
         {
           "scenario": "A food critic decides what 'great biryani' means only after tasting one restaurant's biryani. Can she now judge that restaurant fairly?",
@@ -228,7 +343,31 @@
           ],
           "reject": [
             "yes"
-          ]
+          ],
+          "screen": {
+            "app": "Food critic's notes",
+            "blocks": [
+              {
+                "t": "head",
+                "text": "Biryani review, draft"
+              },
+              {
+                "t": "line",
+                "label": "Tasted today",
+                "value": "Hotel Zaika"
+              },
+              {
+                "t": "line",
+                "label": "What 'great biryani' means",
+                "value": "Written after tasting Hotel Zaika's"
+              },
+              {
+                "t": "line",
+                "label": "Verdict on Hotel Zaika",
+                "value": "Not written yet"
+              }
+            ]
+          }
         }
       ],
       "source": "Lecture 5 notes, section 02 and 11; Concept Check brief (golden pairs)"
@@ -286,7 +425,28 @@
           ],
           "reject": [
             "yes"
-          ]
+          ],
+          "screen": {
+            "app": "Rider app",
+            "blocks": [
+              {
+                "t": "head",
+                "text": "Today's route",
+                "sub": "6 drops · 14 km"
+              },
+              {
+                "t": "line",
+                "label": "Crashes this month",
+                "value": "0"
+              },
+              {
+                "t": "alert",
+                "tone": "bad",
+                "title": "Rider report",
+                "text": "Road closed at MG Road junction. Sent this way again today, the 22nd day running."
+              }
+            ]
+          }
         },
         {
           "scenario": "A translation app gives perfect grammar but the wrong meaning. What should its test check: the grammar or the meaning?",
@@ -297,7 +457,31 @@
           ],
           "reject": [
             "grammar"
-          ]
+          ],
+          "screen": {
+            "app": "Translate",
+            "blocks": [
+              {
+                "t": "head",
+                "text": "English → Hindi"
+              },
+              {
+                "t": "field",
+                "label": "English",
+                "value": "It's raining cats and dogs."
+              },
+              {
+                "t": "field",
+                "label": "Hindi",
+                "value": "बिल्लियाँ और कुत्ते बरस रहे हैं।"
+              },
+              {
+                "t": "note",
+                "text": "Grammar check: no errors",
+                "tone": "good"
+              }
+            ]
+          }
         }
       ],
       "source": "Lecture 5 notes, sections 02, 06 and 14"
@@ -351,7 +535,21 @@
           "reject": [
             "form",
             "chat"
-          ]
+          ],
+          "screen": {
+            "app": "Notes",
+            "blocks": [
+              {
+                "t": "head",
+                "text": "Song from yesterday",
+                "sub": "Saved 9:14 pm"
+              },
+              {
+                "t": "text",
+                "text": "Auto ride home. Something like 'tum hi ho…'? Female singer, slow."
+              }
+            ]
+          }
         },
         {
           "scenario": "A credit card application needs name, PAN, income and address. A startup wants to turn it into a chat. Form or chat?",
@@ -361,7 +559,44 @@
           ],
           "reject": [
             "chat"
-          ]
+          ],
+          "screen": {
+            "app": "Pitch deck",
+            "blocks": [
+              {
+                "t": "head",
+                "text": "Slide 4: Our idea",
+                "sub": "CardChat"
+              },
+              {
+                "t": "line",
+                "label": "Today",
+                "value": "A credit card application"
+              },
+              {
+                "t": "list",
+                "items": [
+                  {
+                    "text": "Full name"
+                  },
+                  {
+                    "text": "PAN"
+                  },
+                  {
+                    "text": "Monthly income"
+                  },
+                  {
+                    "text": "Address"
+                  }
+                ]
+              },
+              {
+                "t": "line",
+                "label": "Our plan",
+                "value": "Turn it into a chat"
+              }
+            ]
+          }
         }
       ],
       "source": "Building UI concept list"
@@ -426,7 +661,28 @@
             "build the app",
             "write code",
             "hire developers"
-          ]
+          ],
+          "screen": {
+            "app": "WhatsApp",
+            "blocks": [
+              {
+                "t": "head",
+                "text": "Riya"
+              },
+              {
+                "t": "msg",
+                "from": "them",
+                "text": "I want to build a tiffin-delivery app for the offices near me!",
+                "name": "Riya"
+              },
+              {
+                "t": "msg",
+                "from": "them",
+                "text": "No developer yet though. Where do I even start?",
+                "name": "Riya"
+              }
+            ]
+          }
         },
         {
           "scenario": "A startup spends 6 months building a fitness app, then learns people only wanted a weekly check-in message. What should they have done first?",
@@ -444,7 +700,41 @@
           "reject": [
             "build",
             "more features"
-          ]
+          ],
+          "screen": {
+            "app": "App store",
+            "blocks": [
+              {
+                "t": "person",
+                "initials": "FN",
+                "name": "FitNow",
+                "sub": "Health and fitness · 6 months in the making"
+              },
+              {
+                "t": "list",
+                "items": [
+                  {
+                    "text": "Workout plans"
+                  },
+                  {
+                    "text": "Diet tracker"
+                  },
+                  {
+                    "text": "Step counter"
+                  },
+                  {
+                    "text": "Leaderboards"
+                  }
+                ]
+              },
+              {
+                "t": "msg",
+                "from": "them",
+                "text": "Honestly, all I wanted was a message every Sunday asking how my week went. ★★☆☆☆",
+                "name": "Review"
+              }
+            ]
+          }
         }
       ],
       "source": "Lecture 5 notes, section 01; Aarav Reference Document, MVP Plan tab"
@@ -508,7 +798,31 @@
             "phone number",
             "upi id",
             "amount"
-          ]
+          ],
+          "screen": {
+            "app": "UPI",
+            "bar": "Pay",
+            "blocks": [
+              {
+                "t": "person",
+                "initials": "RK",
+                "name": "Rohan Kumar",
+                "sub": "rohan@okbank"
+              },
+              {
+                "t": "amount",
+                "text": "₹200"
+              },
+              {
+                "t": "note",
+                "text": "From your account ••4410 · 98••••2210"
+              },
+              {
+                "t": "pin",
+                "label": "Enter UPI PIN"
+              }
+            ]
+          }
         },
         {
           "scenario": "You send two UPI requests to the same friend's UPI ID. One pays ₹200, the other asks for ₹200. Same address. What's different?",
@@ -524,7 +838,32 @@
             "upi id",
             "address",
             "amount"
-          ]
+          ],
+          "screen": {
+            "app": "UPI",
+            "blocks": [
+              {
+                "t": "head",
+                "text": "Recent",
+                "sub": "rohan@okbank"
+              },
+              {
+                "t": "list",
+                "items": [
+                  {
+                    "text": "Paid to Rohan",
+                    "sub": "rohan@okbank",
+                    "right": "₹200"
+                  },
+                  {
+                    "text": "Requested from Rohan",
+                    "sub": "rohan@okbank",
+                    "right": "₹200"
+                  }
+                ]
+              }
+            ]
+          }
         }
       ],
       "source": "Lecture 4 notes, the six parts; Lecture 5 notes, section 15"
@@ -593,7 +932,21 @@
           "reject": [
             "stranger",
             "google"
-          ]
+          ],
+          "screen": {
+            "app": "View source",
+            "blocks": [
+              {
+                "t": "head",
+                "text": "foodie.example",
+                "sub": "Page source"
+              },
+              {
+                "t": "code",
+                "text": "<script src=\"https://maps.googleapis.com/maps/api/js?key=AIzaSyD-9tSrke72PouQMnMX\"></script>"
+              }
+            ]
+          }
         },
         {
           "scenario": "A website scrambles its key in the page and unscrambles it just before sending. Can a visitor still get the real key?",
@@ -603,7 +956,21 @@
           ],
           "reject": [
             "no"
-          ]
+          ],
+          "screen": {
+            "app": "View source",
+            "blocks": [
+              {
+                "t": "head",
+                "text": "shop.example",
+                "sub": "Page source"
+              },
+              {
+                "t": "code",
+                "text": "const k = unscramble(\"x9Qz-7Tb-LmP2\");\nfetch(API, { headers: { key: k } });"
+              }
+            ]
+          }
         }
       ],
       "source": "Lecture 4 Keys guide; Lecture 7 notes, step 01"
@@ -664,7 +1031,36 @@
             "put",
             "patch",
             "delete"
-          ]
+          ],
+          "screen": {
+            "app": "Zomato",
+            "blocks": [
+              {
+                "t": "head",
+                "text": "Your orders"
+              },
+              {
+                "t": "list",
+                "items": [
+                  {
+                    "text": "Paneer tikka roll",
+                    "sub": "Delivered · 12 Oct",
+                    "right": "₹189"
+                  },
+                  {
+                    "text": "Masala dosa",
+                    "sub": "Delivered · 9 Oct",
+                    "right": "₹140"
+                  },
+                  {
+                    "text": "Veg biryani",
+                    "sub": "Delivered · 2 Oct",
+                    "right": "₹260"
+                  }
+                ]
+              }
+            ]
+          }
         },
         {
           "scenario": "On Zomato you place a new order and get back an order number. Which action?",
@@ -677,7 +1073,37 @@
             "get",
             "put",
             "patch"
-          ]
+          ],
+          "screen": {
+            "app": "Zomato",
+            "blocks": [
+              {
+                "t": "head",
+                "text": "Cart",
+                "sub": "Spice Route"
+              },
+              {
+                "t": "line",
+                "label": "Veg biryani × 1",
+                "value": "₹260"
+              },
+              {
+                "t": "line",
+                "label": "To pay",
+                "value": "₹289"
+              },
+              {
+                "t": "button",
+                "text": "Place order"
+              },
+              {
+                "t": "alert",
+                "tone": "good",
+                "title": "Order placed",
+                "text": "Order #48213"
+              }
+            ]
+          }
         }
       ],
       "source": "Lecture 4 notes, the CRUD quiz"
@@ -736,7 +1162,36 @@
           ],
           "reject": [
             "put"
-          ]
+          ],
+          "screen": {
+            "app": "Instagram",
+            "blocks": [
+              {
+                "t": "head",
+                "text": "Edit profile"
+              },
+              {
+                "t": "field",
+                "label": "Photo",
+                "value": "Change photo"
+              },
+              {
+                "t": "field",
+                "label": "Name",
+                "value": "Priya Sharma"
+              },
+              {
+                "t": "field",
+                "label": "Username",
+                "value": "priya.codes"
+              },
+              {
+                "t": "field",
+                "label": "Bio",
+                "value": "Building things, one bug at a time"
+              }
+            ]
+          }
         },
         {
           "scenario": "An app sends PUT with just your new phone number. What happens to your name and address on the profile?",
@@ -756,7 +1211,35 @@
             "same",
             "unchanged",
             "kept"
-          ]
+          ],
+          "screen": {
+            "app": "Developer view",
+            "blocks": [
+              {
+                "t": "head",
+                "text": "Your profile, before"
+              },
+              {
+                "t": "line",
+                "label": "Name",
+                "value": "Priya Sharma"
+              },
+              {
+                "t": "line",
+                "label": "Address",
+                "value": "12 Lake Road, Pune"
+              },
+              {
+                "t": "line",
+                "label": "Phone",
+                "value": "98••••1100"
+              },
+              {
+                "t": "code",
+                "text": "PUT /profile\n{\"phone\": \"98••••7788\"}"
+              }
+            ]
+          }
         }
       ],
       "source": "Lecture 4 notes, the CRUD quiz"
@@ -818,7 +1301,29 @@
             "mine",
             "my",
             "internet"
-          ]
+          ],
+          "screen": {
+            "app": "IRCTC",
+            "bar": "Tatkal booking · 10:00:04",
+            "blocks": [
+              {
+                "t": "head",
+                "text": "NDLS → BCT",
+                "sub": "Rajdhani Exp · 3A · 1 adult"
+              },
+              {
+                "t": "alert",
+                "tone": "bad",
+                "title": "503 Service Unavailable",
+                "text": "Please try again after some time."
+              },
+              {
+                "t": "note",
+                "text": "Your Wi-Fi: connected",
+                "tone": "good"
+              }
+            ]
+          }
         },
         {
           "scenario": "A shopping app replies 400: 'invalid PIN code'. Is the shop's server broken?",
@@ -831,7 +1336,33 @@
           ],
           "reject": [
             "yes"
-          ]
+          ],
+          "screen": {
+            "app": "Checkout",
+            "blocks": [
+              {
+                "t": "head",
+                "text": "Delivery address"
+              },
+              {
+                "t": "field",
+                "label": "Street",
+                "value": "4th Cross, Indiranagar"
+              },
+              {
+                "t": "field",
+                "label": "PIN code",
+                "value": "110099",
+                "bad": true
+              },
+              {
+                "t": "alert",
+                "tone": "bad",
+                "title": "400",
+                "text": "invalid PIN code"
+              }
+            ]
+          }
         }
       ],
       "source": "Lecture 4 notes; Lecture 5 notes, section 08"
@@ -893,7 +1424,26 @@
           "reject": [
             "yes",
             "broken"
-          ]
+          ],
+          "screen": {
+            "app": "Swiggy",
+            "bar": "3:02 am",
+            "blocks": [
+              {
+                "t": "field",
+                "label": "Search",
+                "value": "pizza"
+              },
+              {
+                "t": "empty",
+                "text": "0 results"
+              },
+              {
+                "t": "note",
+                "text": "Response: 200 OK"
+              }
+            ]
+          }
         },
         {
           "scenario": "Your bank's balance request comes back 200, but for your old, closed account. Did you get what you wanted?",
@@ -904,7 +1454,29 @@
           ],
           "reject": [
             "yes"
-          ]
+          ],
+          "screen": {
+            "app": "Bank",
+            "blocks": [
+              {
+                "t": "head",
+                "text": "Balance"
+              },
+              {
+                "t": "line",
+                "label": "Account",
+                "value": "••••2051 (closed in 2024)"
+              },
+              {
+                "t": "amount",
+                "text": "₹0.00"
+              },
+              {
+                "t": "note",
+                "text": "Response: 200 OK"
+              }
+            ]
+          }
         }
       ],
       "source": "Lecture 4 notes, Round Three"
@@ -969,7 +1541,36 @@
           "reject": [
             "phone",
             "the app on"
-          ]
+          ],
+          "screen": {
+            "app": "Swiggy",
+            "blocks": [
+              {
+                "t": "head",
+                "text": "Cart",
+                "sub": "Pizza Point"
+              },
+              {
+                "t": "line",
+                "label": "Item total",
+                "value": "₹480"
+              },
+              {
+                "t": "line",
+                "label": "Gold member discount",
+                "value": "−₹60"
+              },
+              {
+                "t": "line",
+                "label": "To pay",
+                "value": "₹420"
+              },
+              {
+                "t": "button",
+                "text": "Pay ₹420"
+              }
+            ]
+          }
         },
         {
           "scenario": "A tiny quiz app checks your answers. The correct answers sit inside the page. What can a player do?",
@@ -984,7 +1585,21 @@
           ],
           "reject": [
             "nothing"
-          ]
+          ],
+          "screen": {
+            "app": "View source",
+            "blocks": [
+              {
+                "t": "head",
+                "text": "quiz.example",
+                "sub": "Page source"
+              },
+              {
+                "t": "code",
+                "text": "const answers = [\"B\", \"D\", \"A\", \"C\"];\nfunction check(i, pick) { return pick === answers[i]; }"
+              }
+            ]
+          }
         }
       ],
       "source": "Lecture 6 notes, section 03; Lecture 7 notes, step 01"
@@ -1040,7 +1655,27 @@
           "reject": [
             "chatbot",
             "both"
-          ]
+          ],
+          "screen": {
+            "app": "Two apps",
+            "blocks": [
+              {
+                "t": "head",
+                "text": "Same question, asked twice"
+              },
+              {
+                "t": "line",
+                "label": "Calculator",
+                "value": "12 × 7 ="
+              },
+              {
+                "t": "msg",
+                "from": "me",
+                "text": "What is 12 × 7?",
+                "name": "Chatbot"
+              }
+            ]
+          }
         },
         {
           "scenario": "A company tests its chatbot by checking each reply matches a saved reply exactly. Most tests fail even when the replies are good. Why?",
@@ -1058,7 +1693,31 @@
           "reject": [
             "bug",
             "broken"
-          ]
+          ],
+          "screen": {
+            "app": "Test report",
+            "blocks": [
+              {
+                "t": "head",
+                "text": "Chatbot tests",
+                "sub": "42 run"
+              },
+              {
+                "t": "line",
+                "label": "Passed",
+                "value": "4"
+              },
+              {
+                "t": "line",
+                "label": "Failed",
+                "value": "38"
+              },
+              {
+                "t": "note",
+                "text": "Reviewer: the failed replies read well"
+              }
+            ]
+          }
         }
       ],
       "source": "Lecture 4 notes, step 7; Lecture 5 notes, section 02"
@@ -1121,7 +1780,30 @@
           "reject": [
             "delete the post",
             "delete the screenshot"
-          ]
+          ],
+          "screen": {
+            "app": "LinkedIn",
+            "blocks": [
+              {
+                "t": "person",
+                "initials": "AV",
+                "name": "Arjun V",
+                "sub": "Developer"
+              },
+              {
+                "t": "text",
+                "text": "Shipped my first AI app this weekend!"
+              },
+              {
+                "t": "code",
+                "text": "GROQ_API_KEY = \"gsk_8fJ2kQ9wLx41vRtY\"\nclient = Groq(api_key=GROQ_API_KEY)"
+              },
+              {
+                "t": "note",
+                "text": "1,204 views · 48 likes"
+              }
+            ]
+          }
         },
         {
           "scenario": "On Vercel there's no .env file. Where does your app get GROQ_API_KEY from?",
@@ -1136,7 +1818,35 @@
           "reject": [
             "the code",
             "github"
-          ]
+          ],
+          "screen": {
+            "app": "GitHub",
+            "blocks": [
+              {
+                "t": "head",
+                "text": "my-ai-app",
+                "sub": "Files"
+              },
+              {
+                "t": "list",
+                "items": [
+                  {
+                    "text": "app.py"
+                  },
+                  {
+                    "text": "requirements.txt"
+                  },
+                  {
+                    "text": ".gitignore"
+                  }
+                ]
+              },
+              {
+                "t": "code",
+                "text": "key = os.environ[\"GROQ_API_KEY\"]"
+              }
+            ]
+          }
         }
       ],
       "source": "Lecture 4 Keys guide; Lecture 5 notes, section 13; Lecture 7 notes, section 08"
@@ -1197,7 +1907,26 @@
           "reject": [
             "action",
             "shape"
-          ]
+          ],
+          "screen": {
+            "app": "Your code",
+            "blocks": [
+              {
+                "t": "head",
+                "text": "send_otp.py"
+              },
+              {
+                "t": "code",
+                "text": "requests.post(\n  \"https://api.smsone.example/send\",\n  headers={\"Authorization\": \"Bearer \" + KEY},\n  json={\"to\": phone, \"text\": otp})"
+              },
+              {
+                "t": "alert",
+                "tone": "warn",
+                "title": "SMSCheap",
+                "text": "₹0.10 a message. Half what you pay now."
+              }
+            ]
+          }
         },
         {
           "scenario": "A weather app switches to a new weather provider. Does it need to be rewritten from scratch?",
@@ -1207,7 +1936,27 @@
           ],
           "reject": [
             "yes"
-          ]
+          ],
+          "screen": {
+            "app": "Weather",
+            "blocks": [
+              {
+                "t": "head",
+                "text": "Mumbai",
+                "sub": "Partly cloudy"
+              },
+              {
+                "t": "amount",
+                "text": "31°C"
+              },
+              {
+                "t": "alert",
+                "tone": "warn",
+                "title": "Notice",
+                "text": "We're switching to a new weather provider next week."
+              }
+            ]
+          }
         }
       ],
       "source": "Lecture 5 notes, section 15"
@@ -1262,7 +2011,35 @@
           ],
           "reject": [
             "yes"
-          ]
+          ],
+          "screen": {
+            "app": "IRCTC",
+            "blocks": [
+              {
+                "t": "head",
+                "text": "Passenger details"
+              },
+              {
+                "t": "field",
+                "label": "Name",
+                "value": "Asha Rao"
+              },
+              {
+                "t": "field",
+                "label": "Age",
+                "value": "-5"
+              },
+              {
+                "t": "field",
+                "label": "Berth",
+                "value": "Lower"
+              },
+              {
+                "t": "button",
+                "text": "Continue"
+              }
+            ]
+          }
         },
         {
           "scenario": "Someone skips a shopping site's page and sends its API a price of ₹1 for a phone. Who must catch it: the page or the server?",
@@ -1276,7 +2053,24 @@
             "page",
             "browser",
             "frontend"
-          ]
+          ],
+          "screen": {
+            "app": "Developer view",
+            "blocks": [
+              {
+                "t": "head",
+                "text": "Request sent to shop.example/api"
+              },
+              {
+                "t": "code",
+                "text": "POST /api/orders\n{\"item\": \"iPhone 15\", \"price\": 1}"
+              },
+              {
+                "t": "note",
+                "text": "Listed price on the page: ₹69,900"
+              }
+            ]
+          }
         }
       ],
       "source": "Lecture 7 notes, step 03"
@@ -1342,7 +2136,22 @@
             "friend's",
             "his",
             "hers"
-          ]
+          ],
+          "screen": {
+            "app": "WhatsApp",
+            "blocks": [
+              {
+                "t": "head",
+                "text": "Dev"
+              },
+              {
+                "t": "msg",
+                "from": "them",
+                "text": "Check out my portfolio!! localhost:3000/my-portfolio",
+                "name": "Dev"
+              }
+            ]
+          }
         },
         {
           "scenario": "To show that portfolio to anyone, what does your friend need to do?",
@@ -1359,7 +2168,28 @@
           "reject": [
             "localhost",
             "send it again"
-          ]
+          ],
+          "screen": {
+            "app": "WhatsApp",
+            "blocks": [
+              {
+                "t": "head",
+                "text": "Dev"
+              },
+              {
+                "t": "msg",
+                "from": "them",
+                "text": "localhost:3000/my-portfolio",
+                "name": "Dev"
+              },
+              {
+                "t": "msg",
+                "from": "them",
+                "text": "Why can't anyone open my link?",
+                "name": "Dev"
+              }
+            ]
+          }
         }
       ],
       "source": "Lecture 8 notes, section 02; Lecture 7 notes, section 03"
@@ -1429,7 +2259,37 @@
           "reject": [
             "the phone",
             "whatsapp remembers"
-          ]
+          ],
+          "screen": {
+            "app": "WhatsApp",
+            "blocks": [
+              {
+                "t": "head",
+                "text": "Chats",
+                "sub": "New phone · set up today"
+              },
+              {
+                "t": "list",
+                "items": [
+                  {
+                    "text": "Mom",
+                    "sub": "Call me when you reach",
+                    "right": "2023"
+                  },
+                  {
+                    "text": "College gang",
+                    "sub": "Kabir: who's coming Saturday?",
+                    "right": "2024"
+                  },
+                  {
+                    "text": "Riya",
+                    "sub": "Sent the notes!",
+                    "right": "2024"
+                  }
+                ]
+              }
+            ]
+          }
         },
         {
           "scenario": "ChatGPT seems to remember your name in a new chat. Is the model remembering by itself, or is something saved and sent along?",
@@ -1444,7 +2304,27 @@
           "reject": [
             "by itself",
             "the model remembers"
-          ]
+          ],
+          "screen": {
+            "app": "ChatGPT",
+            "blocks": [
+              {
+                "t": "head",
+                "text": "New chat"
+              },
+              {
+                "t": "msg",
+                "from": "me",
+                "text": "What should I cook tonight?"
+              },
+              {
+                "t": "msg",
+                "from": "them",
+                "text": "How about paneer tikka tonight, Priya?",
+                "name": "ChatGPT"
+              }
+            ]
+          }
         }
       ],
       "source": "Lecture 6 notes, sections 04 and 05"
@@ -1505,7 +2385,27 @@
           "reject": [
             "phone",
             "downloaded"
-          ]
+          ],
+          "screen": {
+            "app": "Maps",
+            "blocks": [
+              {
+                "t": "head",
+                "text": "Bengaluru",
+                "sub": "Offline area · downloaded"
+              },
+              {
+                "t": "line",
+                "label": "Map and places",
+                "value": "Available offline"
+              },
+              {
+                "t": "line",
+                "label": "Live traffic",
+                "value": "Updates every minute"
+              }
+            ]
+          }
         },
         {
           "scenario": "Your phone's calculator works in airplane mode. Where does it run?",
@@ -1520,7 +2420,20 @@
             "server",
             "cloud",
             "internet"
-          ]
+          ],
+          "screen": {
+            "app": "Calculator",
+            "blocks": [
+              {
+                "t": "amount",
+                "text": "1,248 ÷ 12 = 104"
+              },
+              {
+                "t": "note",
+                "text": "Airplane mode: on"
+              }
+            ]
+          }
         }
       ],
       "source": "Lecture 6 notes, sections 03 and 06"
@@ -1581,7 +2494,51 @@
           "reject": [
             "trains",
             "train table"
-          ]
+          ],
+          "screen": {
+            "app": "IRCTC database",
+            "blocks": [
+              {
+                "t": "table",
+                "name": "trains",
+                "cols": [
+                  "id",
+                  "name"
+                ],
+                "rows": [
+                  [
+                    "12951",
+                    "Rajdhani Exp"
+                  ],
+                  [
+                    "12009",
+                    "Shatabdi Exp"
+                  ]
+                ]
+              },
+              {
+                "t": "table",
+                "name": "bookings",
+                "cols": [
+                  "booking_id",
+                  "passenger",
+                  "seat"
+                ],
+                "rows": [
+                  [
+                    "B1",
+                    "Asha",
+                    "3A-21"
+                  ],
+                  [
+                    "B2",
+                    "Ravi",
+                    "3A-22"
+                  ]
+                ]
+              }
+            ]
+          }
         },
         {
           "scenario": "Swiggy creates a delivery batch after the orders were placed. One batch has many orders, and each order is in one batch. Which table gets batch_id?",
@@ -1593,7 +2550,44 @@
           "reject": [
             "batches",
             "batch table"
-          ]
+          ],
+          "screen": {
+            "app": "Swiggy database",
+            "blocks": [
+              {
+                "t": "table",
+                "name": "batches",
+                "cols": [
+                  "id",
+                  "rider"
+                ],
+                "rows": [
+                  [
+                    "T7",
+                    "Salim"
+                  ]
+                ]
+              },
+              {
+                "t": "table",
+                "name": "orders",
+                "cols": [
+                  "order_id",
+                  "restaurant"
+                ],
+                "rows": [
+                  [
+                    "5501",
+                    "Spice Route"
+                  ],
+                  [
+                    "5502",
+                    "Pizza Point"
+                  ]
+                ]
+              }
+            ]
+          }
         }
       ],
       "source": "Lecture 6 notes, sections 09 and 10"
@@ -1655,7 +2649,37 @@
           "reject": [
             "cell",
             "one cell"
-          ]
+          ],
+          "screen": {
+            "app": "Bank",
+            "blocks": [
+              {
+                "t": "head",
+                "text": "Transactions",
+                "sub": "2026"
+              },
+              {
+                "t": "list",
+                "items": [
+                  {
+                    "text": "Swiggy",
+                    "sub": "14 Oct",
+                    "right": "−₹420"
+                  },
+                  {
+                    "text": "Salary",
+                    "sub": "1 Oct",
+                    "right": "+₹42,000"
+                  },
+                  {
+                    "text": "Rent",
+                    "sub": "2 Oct",
+                    "right": "−₹15,000"
+                  }
+                ]
+              }
+            ]
+          }
         },
         {
           "scenario": "A shop keeps 'price' in one cell and changes it every Diwali sale. A customer asks last Diwali's price. Can that table tell them?",
@@ -1669,7 +2693,34 @@
           ],
           "reject": [
             "yes"
-          ]
+          ],
+          "screen": {
+            "app": "Shop database",
+            "blocks": [
+              {
+                "t": "table",
+                "name": "products",
+                "cols": [
+                  "item",
+                  "price"
+                ],
+                "rows": [
+                  [
+                    "Silk saree",
+                    "₹2,499"
+                  ],
+                  [
+                    "Diya set",
+                    "₹299"
+                  ]
+                ]
+              },
+              {
+                "t": "note",
+                "text": "Last updated: this Diwali sale"
+              }
+            ]
+          }
         }
       ],
       "source": "Lecture 6 notes, sections 11 and 12"
@@ -1728,7 +2779,30 @@
           "reject": [
             "nothing",
             "fine"
-          ]
+          ],
+          "screen": {
+            "app": "Bus booking",
+            "blocks": [
+              {
+                "t": "head",
+                "text": "Pune → Goa",
+                "sub": "Tonight 9:30 pm"
+              },
+              {
+                "t": "line",
+                "label": "Seats left",
+                "value": "1 (seat 14)"
+              },
+              {
+                "t": "button",
+                "text": "Book seat 14"
+              },
+              {
+                "t": "note",
+                "text": "Seats are kept in seats.txt"
+              }
+            ]
+          }
         },
         {
           "scenario": "A news site with a million readers serves articles from plain files and never loses data. Why is it fine?",
@@ -1746,7 +2820,21 @@
           "reject": [
             "big server",
             "fast"
-          ]
+          ],
+          "screen": {
+            "app": "News",
+            "blocks": [
+              {
+                "t": "head",
+                "text": "Monsoon arrives in Kerala",
+                "sub": "5 min read"
+              },
+              {
+                "t": "note",
+                "text": "1.2 million readers today · served from plain files"
+              }
+            ]
+          }
         }
       ],
       "source": "Lecture 8 notes, section 06"
@@ -1815,7 +2903,26 @@
             "app screen",
             "screen",
             "phone"
-          ]
+          ],
+          "screen": {
+            "app": "Bank",
+            "blocks": [
+              {
+                "t": "head",
+                "text": "My accounts"
+              },
+              {
+                "t": "list",
+                "items": [
+                  {
+                    "text": "Savings ••4410",
+                    "sub": "You",
+                    "right": "₹18,240"
+                  }
+                ]
+              }
+            ]
+          }
         },
         {
           "scenario": "A school portal hides other students' marks on the page, but sends everyone's marks to the browser. Are the marks private?",
@@ -1826,7 +2933,26 @@
           ],
           "reject": [
             "yes"
-          ]
+          ],
+          "screen": {
+            "app": "Developer view",
+            "blocks": [
+              {
+                "t": "head",
+                "text": "School portal",
+                "sub": "What the page shows"
+              },
+              {
+                "t": "line",
+                "label": "Your marks",
+                "value": "78"
+              },
+              {
+                "t": "code",
+                "text": "// What the browser received\n[{\"name\": \"Asha\", \"marks\": 91},\n {\"name\": \"Ravi\", \"marks\": 64},\n {\"name\": \"You\", \"marks\": 78}]"
+              }
+            ]
+          }
         }
       ],
       "source": "Lecture 8 notes, section 11"

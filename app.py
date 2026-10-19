@@ -32,6 +32,39 @@ SUBTOPICS = list(dict.fromkeys(i["subtopic"] for i in IDEAS))
 # asks the same ideas inside apps people use every day, and only it colours the map.
 MODES = {"practice": "Practice", "real": "Real-world test"}
 
+# Each real-world case carries a "screen": the app it happens in, drawn by the page from
+# a few kinds of block. It only sets the scene; the question and its answer stay in the
+# case. Check every screen on startup, so a typo fails loudly here, not in a learner's chat.
+SCREEN_BLOCKS = {
+    "head": ({"text"}, {"sub"}),
+    "person": ({"initials", "name", "sub"}, set()),
+    "amount": ({"text"}, set()),
+    "pin": ({"label"}, set()),
+    "line": ({"label", "value"}, set()),
+    "alert": ({"tone", "title"}, {"text"}),
+    "msg": ({"from", "text"}, {"name"}),
+    "code": ({"text"}, set()),
+    "field": ({"label", "value"}, {"bad"}),
+    "button": ({"text"}, set()),
+    "note": ({"text"}, {"tone"}),
+    "text": ({"text"}, set()),
+    "table": ({"name", "cols", "rows"}, set()),
+    "list": ({"items"}, set()),
+    "empty": ({"text"}, set()),
+}
+
+
+def check_screen(where, screen):
+    assert set(screen) <= {"app", "bar", "blocks"} and screen.get("app") and screen.get("blocks"), where
+    for block in screen["blocks"]:
+        need, may = SCREEN_BLOCKS[block["t"]]
+        assert need <= set(block) <= need | may | {"t"}, f"{where}: {block}"
+
+
+for _idea in IDEAS:
+    for _n, _case in enumerate(_idea["real_world"]):
+        check_screen(f"{_idea['id']} real-world case {_n + 1}", _case["screen"])
+
 L4 = "https://100x-curriculum.vercel.app/c8/module-2/lecture-04-the-second-interface/post-lecture/notes"
 L5 = "https://100x-curriculum.vercel.app/c8/module-2/lecture-05-building-apis/notes"
 L6 = "https://100x-curriculum.vercel.app/c8/module-2/lecture-06-databases-and-domain-modelling/notes"
@@ -260,7 +293,11 @@ def explain_card(s, simpler=False):
 
 def case_card(s, which):
     a, b = cases(s, s["items"][s["index"]])
-    return {"kind": "case", "label": "A new case" if which == "a" else "One more new case", "text": (a if which == "a" else b)["scenario"]}
+    case = a if which == "a" else b
+    card = {"kind": "case", "label": "A new case" if which == "a" else "One more new case", "text": case["scenario"]}
+    if "screen" in case:
+        card["screen"] = case["screen"]
+    return card
 
 
 def next_card(s):
