@@ -3,7 +3,7 @@ import os
 import requests
 import gradio as gr
 
-from prompts import FOLLOW_UP_PROMPT, GRADER_PROMPT
+from prompts import EXPLAIN_PROMPT, FOLLOW_UP_PROMPT, GRADER_PROMPT
 
 PAIRS = json.load(open("golden_pairs.json"))["pairs"]
 SUBTOPICS = list(dict.fromkeys(p["subtopic"] for p in PAIRS))
@@ -70,6 +70,18 @@ def write_follow_up(pair, s, target):
     return ask_groq(FOLLOW_UP_PROMPT, user).get("follow_up", "What would happen next in this exact scenario?")
 
 
+# AI explains the full answer, using only the answer key.
+def explain(pair, s):
+    answer_key = key_point_text(pair, [k["id"] for k in pair["key_points"]])
+    user = (
+        "Original question:\n" + pair["question"]
+        + "\n\nConversation so far:\n" + conversation(s)
+        + "\n\nFull answer key:\n" + answer_key
+        + "\n\nWhat they already showed:\n" + (key_point_text(pair, s["met"]) or "Nothing yet.")
+    )
+    return ask_groq(EXPLAIN_PROMPT, user).get("explanation", "")
+
+
 # Code decides: which pass-rule key points are still missing.
 def missing(pair, met):
     v = pair["verifier"]
@@ -106,7 +118,8 @@ def next_question(s, points, reply):
     s["met"] = set()
     s["follow_ups"] = 0
     if s["index"] < len(s["pairs"]):
-        return reply + "\n\n" + ask(s)
+        s["waiting"] = True
+        return reply + f"\n\nSay **next** when you're ready for question {s['index'] + 1}."
     return reply + "\n\n" + finish(s)
 
 
@@ -123,12 +136,20 @@ def respond(message, history, subtopic, request: gr.Request):
             "turns": [],
             "met": set(),
             "follow_ups": 0,
+            "waiting": False,
         }
         SESSIONS[request.session_hash] = s
         return (
             f"**{subtopic}**: {len(s['pairs'])} questions. "
             "Answer in your own words, the way you'd explain it to a classmate.\n\n" + ask(s)
         )
+
+    # A question was just settled: wait until the learner asks for the next one.
+    if s["waiting"]:
+        if "next" in message.lower():
+            s["waiting"] = False
+            return ask(s)
+        return f"Say **next** when you're ready for question {s['index'] + 1}."
 
     pair = s["pairs"][s["index"]]
     if s["turns"]:
@@ -159,9 +180,15 @@ def respond(message, history, subtopic, request: gr.Request):
             lead = "Let's work it out a step at a time. "
         return lead + "Think about this:\n\n**" + follow_up + "**"
 
-    # Out of nudges: show the piece that was missing and move on.
-    pieces = gaps or pair["key_points"][:1]
-    reply = "**Not yet, 0 points.** Here's the piece you were missing:\n" + "\n".join("- " + k["text"] for k in pieces)
+    # Out of nudges: explain the full answer, then show the whole answer key.
+    answer_key = "\n".join(
+        "- " + k["text"] + (" *(you had this)*" if k["id"] in s["met"] else "")
+        for k in pair["key_points"]
+    )
+    reply = (
+        "**Not yet, 0 points.** Here's the full answer:\n\n" + explain(pair, s)
+        + "\n\n**The answer key**\n" + answer_key
+    )
     return next_question(s, 0, reply)
 
 

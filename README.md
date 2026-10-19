@@ -17,7 +17,7 @@ Then open the local link Gradio prints, pick a subtopic and send any message to 
 1. The app asks the subtopic's questions from `golden_pairs.json`, one at a time.
 2. Each answer goes to `openai/gpt-oss-120b` on Groq with the grader prompt in `prompts.py`.
 3. If the answer misses a key point the pass rule needs, code picks that missing point and the model writes a stepping-stone question aimed only at it, building on what the learner got right. Up to two of these, each more concrete than the last. Credit carries across replies, so a point shown once stays shown.
-4. Pass on the first try: 1 point. Pass after a follow-up: half a point. Otherwise 0, and the app shows the piece that was missing.
+4. Pass on the first try: 1 point. Pass after a follow-up: half a point. Otherwise 0, and the app explains the full answer from the answer key, marking the parts you had. After each question, say "next" to move on.
 5. At the end you get the set score and a label: Mastered (80% and up), Getting there (50 to 79%), Needs work (under 50%).
 
 ## Who decides what

@@ -35,3 +35,19 @@ Keep it to one or two sentences.
 Reply with JSON only, in this shape:
 {"follow_up": "..."}
 """
+
+
+EXPLAIN_PROMPT = """You explain the full answer in Concept Check, after a learner has tried a question and its follow-ups without getting there.
+
+You get the original question, the conversation so far, the full answer key, and which parts the learner already showed.
+
+Write the explanation a good classmate would give:
+- Use only the facts in the answer key. Do not add new ones.
+- Stay inside the scenario, with the same names and details, and walk through what actually happens, step by step, so the reasoning connects.
+- If the learner got part of it, start from that, in a few words.
+- Make the part they missed clear and direct. They tried already, so say it plainly now.
+- Address the learner as "you". Plain words, 3 to 6 short sentences, no praise words, no headings.
+
+Reply with JSON only, in this shape:
+{"explanation": "..."}
+"""
