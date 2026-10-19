@@ -50,7 +50,7 @@ SESSIONS = {}
 def ask_groq(system, user):
     key = os.environ.get("GROQ_API_KEY", "")
     if not key or key == "paste_your_key_here":
-        raise HTTPException(500, "GROQ_API_KEY is missing. Paste your key into the .env file, then restart python app.py.")
+        raise HTTPException(500, "GROQ_API_KEY is missing. Paste your key into the .env file, then restart python3 app.py.")
     r = requests.post(
         "https://api.groq.com/openai/v1/chat/completions",
         headers={"Authorization": "Bearer " + key},
@@ -284,7 +284,7 @@ if PUBLIC.is_dir():
     app.mount("/", StaticFiles(directory=PUBLIC, html=True), name="public")
 
 
-# python app.py starts everything: the API and the page, at http://127.0.0.1:8000
+# python3 app.py starts everything: the API and the page, at http://127.0.0.1:8000
 # uvicorn is the program that turns the FastAPI app above into a running web server.
 # reload=True restarts it whenever you save a file.
 if __name__ == "__main__":

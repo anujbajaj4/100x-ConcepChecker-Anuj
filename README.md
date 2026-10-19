@@ -15,12 +15,12 @@ Concept Check finds where a learner stops understanding and starts reciting. Pic
 3. Start everything:
 
    ```bash
-   python app.py
+   python3 app.py
    ```
 
 4. Open http://127.0.0.1:8000, pick a subtopic and press Start test. Press Ctrl+C in the terminal to stop.
 
-`python app.py` starts one server that serves both the page and the API, the same way `08-supabase-api` does in the c8-db repo. Inside, it uses uvicorn, the program that turns the FastAPI app into a running web server, and restarts it whenever you save a file.
+`python3 app.py` starts one server that serves both the page and the API, the same way `08-supabase-api` does in the c8-db repo. Inside, it uses uvicorn, the program that turns the FastAPI app into a running web server, and restarts it whenever you save a file.
 
 ## The two interfaces
 
@@ -55,7 +55,7 @@ The model never decides on its own that a learner understands. The answer key is
 ## Files
 
 - `public/index.html`: the chat page.
-- `app.py`: the FastAPI routes, the Groq call and the scoring. Run it with `python app.py`.
+- `app.py`: the FastAPI routes, the Groq call and the scoring. Run it with `python3 app.py`.
 - `.env.example`: the variable names to copy into your own `.env`.
 - `prompts.py`: the grader, follow-up and explanation prompts.
 - `golden_pairs.json`: 54 questions with key points and pass rules across 12 subtopics.
