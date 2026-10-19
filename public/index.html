@@ -7,127 +7,326 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root { --ink: #1E2B45; --muted: #566175; --line: #D5DBE3; --ground: #F4F6F9; --mine: #E8EDF4; --red: #A8321C; }
+  :root {
+    --ink: #1E2B45; --text: #3A4559; --muted: #566175; --line: #D5DBE3; --line-strong: #C3CBD6;
+    --ground: #F4F6F9; --card: #FFFFFF; --mine: #E8EDF4;
+    --green: #1F6E46; --green-bg: #EEF7F1; --green-line: #A9CFB7;
+    --amber: #8A5A00; --amber-bar: #B07A12; --amber-bg: #FDF6E7; --amber-line: #E8CF96;
+    --red: #A8321C; --soft-bg: #F2F5F9; --soft-line: #C9D2E0; --focus: #2F5BD3;
+  }
   * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
   body { margin: 0; background: var(--ground); color: var(--ink); font: 16px/1.6 'Schibsted Grotesk', system-ui, sans-serif; }
-  main { max-width: 760px; margin: 0 auto; padding: 24px 16px 40px; display: flex; flex-direction: column; gap: 16px; min-height: 100vh; }
-  h1 { margin: 0; font-size: 26px; letter-spacing: -0.02em; }
-  .bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
-  label { display: flex; flex-direction: column; gap: 4px; font-size: 14px; font-weight: 600; }
-  select, textarea { font: inherit; color: inherit; border: 1.5px solid var(--ink); border-radius: 8px; background: #fff; padding: 10px 12px; }
-  button { font: inherit; font-weight: 600; min-height: 44px; padding: 0 18px; border: none; border-radius: 8px; background: var(--ink); color: #fff; cursor: pointer; }
-  button:disabled { opacity: 0.5; cursor: wait; }
-  :focus-visible { outline: 2px solid #2F5BD3; outline-offset: 2px; }
-  #log { flex: 1; display: flex; flex-direction: column; gap: 14px; background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 20px; }
-  #log:empty::before { content: "Pick a subtopic and press Start test."; color: var(--muted); }
-  .msg p { margin: 0 0 8px; } .msg p:last-child { margin: 0; }
-  .msg ul { margin: 0 0 8px; padding-left: 20px; }
-  .msg blockquote { margin: 0 0 8px; padding: 0; text-decoration: underline wavy var(--red); text-underline-offset: 5px; }
-  .mine { align-self: flex-end; max-width: 85%; background: var(--mine); padding: 10px 14px; border-radius: 14px 14px 4px 14px; white-space: pre-wrap; }
+  button, select, textarea { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  a { color: var(--ink); } a:hover { color: var(--focus); }
+
+  /* Header */
+  .top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; padding: 12px 32px; background: var(--card); border-bottom: 1px solid var(--line); }
+  .top-left { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; min-width: 0; }
+  .crumbs { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .crumbs span { font-size: 13px; color: var(--muted); }
+  .crumbs h1 { margin: 0; font-size: 20px; line-height: 1.2; letter-spacing: -0.01em; }
+  .top-right { display: flex; align-items: center; gap: 16px; font-size: 14.5px; color: var(--text); }
+  .btn { min-height: 44px; padding: 0 16px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--card); font-size: 14.5px; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
+  .btn.primary { background: var(--ink); border-color: var(--ink); color: #fff; font-weight: 600; }
+  .btn:disabled { opacity: 0.5; cursor: wait; }
+
+  /* Picker */
+  .picker { max-width: 560px; margin: 64px auto; padding: 0 16px; }
+  .picker-card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 28px; display: flex; flex-direction: column; gap: 16px; }
+  .picker h2 { margin: 0; font-size: 24px; line-height: 1.2; letter-spacing: -0.02em; }
+  .picker p { margin: 0; color: var(--text); }
+  .field { display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 600; }
+  select { min-height: 44px; border: 1.5px solid var(--ink); border-radius: 8px; background: var(--card); padding: 0 12px; }
+
+  /* Test layout */
+  .layout { max-width: 1280px; margin: 0 auto; padding: 28px 32px 40px; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 28px; }
+  aside { flex: 1 1 260px; max-width: 300px; display: flex; flex-direction: column; gap: 20px; }
+  .panel { padding: 18px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; }
+  .panel h2 { margin: 0 0 12px; font-size: 15px; font-weight: 600; }
+  .set { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; }
+  .set li { display: flex; gap: 12px; align-items: flex-start; padding: 8px 0; }
+  .set li.current { padding: 8px 10px; margin: 0 -10px; background: var(--mine); border-radius: 8px; }
+  .set svg { flex: none; }
+  .set .name { font-size: 14.5px; font-weight: 500; }
+  .set .current .name { font-weight: 600; }
+  .set .upcoming .name { color: var(--text); }
+  .set .state { display: block; font-size: 13px; }
+  .big { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.02em; }
+  .big .of { font-size: 15px; font-weight: 500; color: var(--muted); letter-spacing: 0; }
+  .segs { display: flex; gap: 3px; margin: 10px 0; }
+  .segs span { flex: 1; height: 6px; border-radius: 2px; background: var(--line); }
+  .small { margin: 0; font-size: 13px; line-height: 1.5; color: var(--muted); }
+  .notes { display: flex; flex-direction: column; gap: 2px; padding: 14px 18px; border: 1px dashed #8A93A3; border-radius: 12px; text-decoration: none; }
+  .notes b { font-size: 14.5px; font-weight: 600; }
+  .notes span { font-size: 13px; color: var(--muted); }
+
+  /* Chat */
+  .chat { flex: 999 1 520px; min-width: 0; max-width: 820px; display: flex; flex-direction: column; gap: 18px; }
+  .thread { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 28px 32px; display: flex; flex-direction: column; gap: 22px; min-height: 360px; }
+  .row { display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 14px; }
+  .avatar { width: 32px; height: 32px; border-radius: 8px; background: var(--ink); display: flex; align-items: center; justify-content: center; }
+  .body { display: flex; flex-direction: column; gap: 6px; max-width: 62ch; }
+  .label { font-size: 13px; font-weight: 600; color: var(--muted); }
+  .body p, .card p { margin: 0; }
+  .body p + p, .card p + p { margin-top: 8px; }
+  .thinking { color: var(--muted); font-style: italic; }
+  .mine { align-self: flex-end; max-width: 560px; padding: 14px 18px; background: var(--mine); border-radius: 14px 14px 4px 14px; white-space: pre-wrap; line-height: 1.65; }
+  mark.recited { background: none; color: inherit; text-decoration: underline wavy var(--amber-bar); text-decoration-thickness: 1.5px; text-underline-offset: 5px; }
+  .card { padding: 16px 18px; border: 1.5px solid; border-radius: 12px; display: flex; flex-direction: column; gap: 8px; max-width: 62ch; font-size: 15px; color: var(--text); }
+  .card .heading { font-weight: 600; }
+  .card .ask { font-size: 16px; font-weight: 500; color: var(--ink); }
+  .card ul { margin: 0; padding-left: 20px; }
+  .card.follow_up { background: var(--amber-bg); border-color: var(--amber-line); }
+  .card.follow_up .heading { color: var(--amber); }
+  .card.passed, .card.half { background: var(--green-bg); border-color: var(--green-line); }
+  .card.passed .heading, .card.half .heading { color: var(--green); }
+  .card.missed { background: var(--soft-bg); border-color: var(--soft-line); }
+  .card.missed .heading, .card.done .heading { color: var(--ink); }
+  .card.done { background: var(--card); border-color: var(--ink); }
+  .card .had { color: var(--green); font-style: italic; }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
   .error { color: var(--red); font-weight: 600; }
-  form { display: flex; gap: 10px; align-items: end; }
-  form textarea { flex: 1; resize: vertical; min-height: 52px; }
+
+  /* Answer box */
+  form { display: flex; flex-direction: column; gap: 8px; }
+  form label { font-size: 14px; font-weight: 600; }
+  .box { display: flex; align-items: flex-end; gap: 10px; padding: 10px 10px 10px 16px; background: var(--card); border: 1.5px solid var(--ink); border-radius: 12px; }
+  .box textarea { flex: 1; min-width: 0; border: none; resize: none; background: transparent; font-size: 16px; line-height: 1.5; padding: 4px 0; outline-offset: 6px; }
+  .send { flex: none; width: 44px; height: 44px; border: none; border-radius: 8px; background: var(--ink); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .send:disabled { opacity: 0.5; cursor: wait; }
+
+  @media (max-width: 640px) {
+    .top, .layout { padding-left: 16px; padding-right: 16px; }
+    .thread { padding: 20px 16px; }
+    aside { max-width: none; }
+  }
 </style>
 </head>
 <body>
-<main>
-  <h1>Concept Check</h1>
 
-  <div class="bar">
-    <label>Subtopic
+<header class="top">
+  <div class="top-left">
+    <a id="back" class="btn" href="/" hidden>
+      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M11 4 L6 9 L11 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      All subtopics
+    </a>
+    <div class="crumbs">
+      <span id="topic"></span>
+      <h1 id="title">Concept Check</h1>
+    </div>
+  </div>
+  <div class="top-right" id="head-right" hidden>
+    <span id="count"></span>
+    <button id="end" class="btn" type="button">End test</button>
+  </div>
+</header>
+
+<section class="picker" id="picker">
+  <div class="picker-card">
+    <h2>Test yourself on one subtopic</h2>
+    <p>You'll answer a few real-life questions in chat. If part of an answer sounds memorised, you'll get a nudge to work it out in your own words.</p>
+    <label class="field">Subtopic
       <select id="subtopic"></select>
     </label>
-    <button id="start" type="button">Start test</button>
+    <div><button id="start" class="btn primary" type="button">Start test</button></div>
   </div>
+</section>
 
-  <div id="log" aria-live="polite"></div>
+<div class="layout" id="test" hidden>
+  <aside>
+    <section class="panel">
+      <h2>This set</h2>
+      <ol class="set" id="set"></ol>
+    </section>
+    <section class="panel">
+      <h2>Score so far</h2>
+      <p class="big"><span id="score">0</span> <span class="of" id="score-of"></span></p>
+      <div class="segs" id="segs" role="img" aria-label="Question results"></div>
+      <p class="small">A pass after a nudge counts as half. Your final score colours this subtopic on the map.</p>
+    </section>
+    <a class="notes" id="notes" target="_blank" rel="noopener">
+      <b>Revise the notes</b>
+      <span>Opens the notes for this subtopic in a new tab</span>
+    </a>
+  </aside>
 
-  <form id="form">
-    <label style="flex: 1">Your answer
-      <textarea id="message" rows="2" placeholder="Explain it the way you'd tell a classmate"></textarea>
-    </label>
-    <button id="send" type="submit">Send</button>
-  </form>
-</main>
+  <main class="chat">
+    <div class="thread" id="log" aria-live="polite"></div>
+    <form id="form">
+      <label for="message">Your answer</label>
+      <div class="box">
+        <textarea id="message" rows="2" placeholder="Explain it the way you'd tell a classmate"></textarea>
+        <button class="send" id="send" type="submit" aria-label="Send answer">
+          <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 16 V4 M5 9 L10 4 L15 9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+      <p class="small">Your own words count more than the textbook ones. Enter sends, Shift+Enter adds a line.</p>
+    </form>
+  </main>
+</div>
 
 <script>
-  // One id per quiz, so the server can tell your quiz from someone else's.
-  let sessionId = crypto.randomUUID();
-  const log = document.getElementById("log");
-  const subtopic = document.getElementById("subtopic");
-  const message = document.getElementById("message");
-  const send = document.getElementById("send");
+  const $ = (id) => document.getElementById(id);
+  const log = $("log"), message = $("message"), send = $("send");
+  let sessionId = null;
+
+  const LOGO = '<svg width="18" height="18" viewBox="0 0 28 28" aria-hidden="true"><circle cx="6" cy="14" r="4" fill="#fff"/><circle cx="22" cy="6" r="3.5" fill="none" stroke="#fff" stroke-width="2.5"/><circle cx="22" cy="22" r="3.5" fill="none" stroke="#fff" stroke-width="2.5"/><path d="M10 14 C14 14 14 6 18.5 6 M10 14 C14 14 14 22 18.5 22" fill="none" stroke="#fff" stroke-width="2.5"/></svg>';
+  const ICONS = {
+    passed: '<svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="10" fill="#1F6E46"/><path d="M6.5 11.2 L9.6 14.2 L15.5 8" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    half: '<svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="9.25" fill="#fff" stroke="#8A5A00" stroke-width="1.5"/><path d="M11 1.75 A9.25 9.25 0 0 1 11 20.25 Z" fill="#8A5A00"/></svg>',
+    missed: '<svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="9.25" fill="#fff" stroke="#A8321C" stroke-width="1.5"/><path d="M7.5 11 H14.5" stroke="#A8321C" stroke-width="2" stroke-linecap="round"/></svg>',
+    current: '<svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="9.25" fill="#fff" stroke="#1E2B45" stroke-width="2"/><circle cx="11" cy="11" r="4" fill="#1E2B45"/></svg>',
+    upcoming: '<svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="9.25" fill="none" stroke="#8A93A3" stroke-width="1.5"/></svg>',
+  };
+  const RESULT = { 1: ["passed", "Passed", "#1F6E46"], 0.5: ["half", "Passed after a nudge", "#8A5A00"], 0: ["missed", "Not yet", "#A8321C"] };
+  const SEG = { 1: "#1F6E46", 0.5: "#B07A12", 0: "#A8321C" };
 
   // Read: fill the dropdown from the server.
-  fetch("/api/subtopics")
-    .then((r) => r.json())
-    .then((data) => {
-      for (const name of data.subtopics) subtopic.add(new Option(name, name));
-    });
+  fetch("/api/subtopics").then((r) => r.json()).then((data) => {
+    for (const name of data.subtopics) $("subtopic").add(new Option(name, name));
+  });
 
-  // Create: send one message, get one reply.
+  // Create: send one message, get the replies and the quiz state back.
   // Address: /api/chat. Action: POST. Package: JSON. Key: none, it stays on the server.
   async function talk(text, show = true) {
-    if (show) addMessage(text, "mine");
+    if (show) addMine(text);
+    const waiting = addRow('<p class="thinking">' + (show ? "Checking your answer…" : "Loading questions…") + "</p>");
     send.disabled = true;
     try {
       const r = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ session_id: sessionId, subtopic: subtopic.value, message: text }),
+        body: JSON.stringify({ session_id: sessionId, subtopic: $("subtopic").value, message: text }),
       });
       const data = await r.json();
-      if (r.ok) addMessage(data.reply, "bot");
-      else addMessage(r.status + ": " + (data.detail || "Something went wrong"), "error");
+      waiting.remove();
+      if (!r.ok) {
+        addRow('<p class="error">' + escape(r.status + ": " + (data.detail?.[0]?.msg || data.detail || "Something went wrong")) + "</p>");
+      } else {
+        data.messages.forEach(addBot);
+        drawState(data.state);
+      }
     } catch {
-      addMessage("Could not reach the server. Is it running?", "error");
+      waiting.remove();
+      addRow('<p class="error">Could not reach the server. Is it running?</p>');
     }
     send.disabled = false;
     message.focus();
   }
 
-  function addMessage(text, kind) {
+  function addRow(inner, withAvatar = true) {
+    const row = document.createElement("div");
+    row.className = "row";
+    row.innerHTML = (withAvatar ? '<span class="avatar">' + LOGO + "</span>" : "<span></span>") + '<div class="body">' + inner + "</div>";
+    log.append(row);
+    row.scrollIntoView({ behavior: "smooth", block: "end" });
+    return row;
+  }
+
+  function addMine(text) {
     const div = document.createElement("div");
-    div.className = "msg " + kind;
-    if (kind === "bot") div.innerHTML = render(text);
-    else div.textContent = text;
+    div.className = "mine";
+    div.textContent = text;
     log.append(div);
-    div.scrollIntoView({ behavior: "smooth", block: "end" });
   }
 
-  // Just enough Markdown for the replies: **bold**, *italic*, "> quote" and "- list".
-  // Escape first, so nothing in a reply can run as HTML.
-  function render(text) {
-    const escape = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    const inline = (s) => escape(s).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/\*(.+?)\*/g, "<em>$1</em>");
-    return text.split(/\n{2,}/).map((block) => {
-      if (block.startsWith("> ")) return "<blockquote>" + inline(block.slice(2)) + "</blockquote>";
-      // Text lines become a paragraph; a run of "- " lines becomes a list.
-      let html = "", text = [], items = [];
-      const flush = () => {
-        if (text.length) html += "<p>" + text.map(inline).join("<br>") + "</p>";
-        if (items.length) html += "<ul>" + items.map((i) => "<li>" + inline(i) + "</li>").join("") + "</ul>";
-        text = []; items = [];
-      };
-      for (const line of block.split("\n")) {
-        if (line.startsWith("- ")) { if (text.length) flush(); items.push(line.slice(2)); }
-        else { if (items.length) flush(); text.push(line); }
+  function addBot(m) {
+    if (m.kind === "intro") return addRow(render(m.text));
+    if (m.kind === "question") {
+      log.querySelectorAll(".next-actions").forEach((el) => el.remove());
+      return addRow('<span class="label">' + escape(m.label) + "</span>" + render(m.text));
+    }
+    if (m.kind === "next") {
+      const row = addRow(render(m.text) + '<div class="actions next-actions"><button class="btn" type="button">Next question</button></div>', false);
+      row.querySelector("button").onclick = (e) => { e.target.disabled = true; talk("next"); };
+      return;
+    }
+    let inner = '<p class="heading">' + escape(m.heading) + "</p>";
+    if (m.text) inner += render(m.text);
+    if (m.kind === "follow_up") {
+      inner += '<p class="ask">' + escape(m.question) + "</p>";
+      if (m.quote) markQuote(m.quote);
+    }
+    if (m.kind === "missed") {
+      inner += '<p class="heading">The full answer</p><ul>' + m.key_points.map((k) =>
+        "<li>" + escape(k.text) + (k.had ? ' <span class="had">(you had this)</span>' : "") + "</li>").join("") + "</ul>";
+    }
+    const row = addRow('<div class="card ' + m.kind + '">' + inner + (m.kind === "done" ? '<div class="actions"><button class="btn primary" type="button" data-act="again">Try this set again</button><button class="btn" type="button" data-act="pick">Pick another subtopic</button></div>' : "") + "</div>", false);
+    if (m.kind === "done") {
+      row.querySelector('[data-act="again"]').onclick = start;
+      row.querySelector('[data-act="pick"]').onclick = showPicker;
+    }
+  }
+
+  // Underline the memorised sentence inside your last message.
+  function markQuote(quote) {
+    const bubbles = log.querySelectorAll(".mine");
+    const bubble = bubbles[bubbles.length - 1];
+    if (!bubble) return;
+    const text = bubble.textContent, i = text.indexOf(quote);
+    if (i < 0) return;
+    bubble.innerHTML = escape(text.slice(0, i)) + '<mark class="recited">' + escape(quote) + "</mark>" + escape(text.slice(i + quote.length));
+  }
+
+  function drawState(s) {
+    $("topic").textContent = s.topic;
+    $("title").textContent = s.subtopic;
+    const total = s.concepts.length;
+    $("count").innerHTML = s.done ? "Set complete" : "Question <strong>" + (s.index + 1) + "</strong> of " + total;
+    $("set").innerHTML = s.concepts.map((c, i) => {
+      let icon, cls, state = "";
+      if (i < s.results.length) {
+        const [key, label, color] = RESULT[s.results[i]];
+        icon = ICONS[key]; cls = ""; state = '<span class="state" style="color:' + color + '">' + label + "</span>";
+      } else if (i === s.index && !s.done) {
+        icon = ICONS.current; cls = "current"; state = '<span class="state" style="color:#3A4559">' + (s.waiting ? "Up next" : "You're here") + "</span>";
+      } else {
+        icon = ICONS.upcoming; cls = "upcoming";
       }
-      flush();
-      return html;
+      return '<li class="' + cls + '"' + (cls === "current" ? ' aria-current="step"' : "") + ">" + icon + '<span><span class="name">' + (i + 1) + ". " + escape(c) + "</span>" + state + "</span></li>";
     }).join("");
+    $("score").textContent = s.score;
+    $("score-of").textContent = "out of " + s.results.length + " answered";
+    $("segs").innerHTML = s.concepts.map((_, i) => {
+      const color = i < s.results.length ? SEG[s.results[i]] : i === s.index && !s.done ? "#1E2B45" : "";
+      return "<span" + (color ? ' style="background:' + color + '"' : "") + "></span>";
+    }).join("");
+    $("notes").hidden = !s.notes_url;
+    $("notes").href = s.notes_url || "#";
   }
 
-  document.getElementById("start").onclick = () => {
+  function start() {
     sessionId = crypto.randomUUID();
     log.innerHTML = "";
+    $("picker").hidden = true;
+    $("test").hidden = false;
+    $("back").hidden = false;
+    $("head-right").hidden = false;
     talk("start", false);
-  };
+  }
 
-  document.getElementById("form").onsubmit = (e) => {
+  function showPicker() {
+    sessionId = null;
+    $("picker").hidden = false;
+    $("test").hidden = true;
+    $("back").hidden = true;
+    $("head-right").hidden = true;
+    $("topic").textContent = "";
+    $("title").textContent = "Concept Check";
+  }
+
+  $("start").onclick = start;
+  $("end").onclick = () => {
+    if (confirm("End this test? Your answers in this set won't be scored.")) showPicker();
+  };
+  $("back").onclick = (e) => { e.preventDefault(); showPicker(); };
+
+  $("form").onsubmit = (e) => {
     e.preventDefault();
     const text = message.value.trim();
-    if (!text) return;
+    if (!text || send.disabled) return;
     message.value = "";
     talk(text);
   };
@@ -136,9 +335,33 @@
   message.addEventListener("keydown", (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      document.getElementById("form").requestSubmit();
+      $("form").requestSubmit();
     }
   });
+
+  function escape(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  // Just enough Markdown for the replies: **bold**, *italic* and "- list".
+  // Escape first, so nothing in a reply can run as HTML.
+  function render(text) {
+    const inline = (s) => escape(s).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/\*(.+?)\*/g, "<em>$1</em>");
+    return text.split(/\n{2,}/).map((block) => {
+      let html = "", lines = [], items = [];
+      const flush = () => {
+        if (lines.length) html += "<p>" + lines.map(inline).join("<br>") + "</p>";
+        if (items.length) html += "<ul>" + items.map((i) => "<li>" + inline(i) + "</li>").join("") + "</ul>";
+        lines = []; items = [];
+      };
+      for (const line of block.split("\n")) {
+        if (line.startsWith("- ")) { if (lines.length) flush(); items.push(line.slice(2)); }
+        else { if (items.length) flush(); lines.push(line); }
+      }
+      flush();
+      return html;
+    }).join("");
+  }
 </script>
 </body>
 </html>

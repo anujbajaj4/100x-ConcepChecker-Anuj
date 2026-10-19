@@ -15,14 +15,14 @@ Then open http://127.0.0.1:8000, pick a subtopic and press Start test.
 ## The two interfaces
 
 - `public/index.html` is the page: a dropdown, a chat log, a text box, a button and one `fetch` to `/api/chat`. It holds no key.
-- `api/index.py` is the server. `GET /api/subtopics` lists the subtopics. `POST /api/chat` takes `{"session_id", "subtopic", "message"}` and returns `{"reply"}`. Pydantic rejects any other package with a 422. The Groq key lives only here, in an environment variable.
+- `api/index.py` is the server. `GET /api/subtopics` lists the subtopics. `POST /api/chat` takes `{"session_id", "subtopic", "message"}` and returns `{"messages", "state"}`: the reply cards to show, and the quiz state the sidebar draws (results so far, score, current question, notes link). Pydantic rejects any other package with a 422. The Groq key lives only here, in an environment variable.
 
 | Dial | `POST /api/chat` |
 |---|---|
 | Address | `/api/chat`, same origin as the page |
 | Action | POST |
 | Key | None from the browser. The server adds the Groq key itself |
-| Package | `{"session_id", "subtopic", "message"}` in, `{"reply"}` out |
+| Package | `{"session_id", "subtopic", "message"}` in, `{"messages", "state"}` out |
 
 ## How a set works
 

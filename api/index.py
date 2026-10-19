@@ -17,6 +17,27 @@ PAIRS = json.load(open(ROOT / "golden_pairs.json"))["pairs"]
 SUBTOPICS = list(dict.fromkeys(p["subtopic"] for p in PAIRS))
 MAX_FOLLOW_UPS = 2
 
+L4 = "https://100x-curriculum.vercel.app/c8/module-2/lecture-04-the-second-interface/post-lecture/notes"
+L5 = "https://100x-curriculum.vercel.app/c8/module-2/lecture-05-building-apis/notes"
+L6 = "https://100x-curriculum.vercel.app/c8/module-2/lecture-06-databases-and-domain-modelling/notes"
+L7 = "https://100x-curriculum.vercel.app/c8/module-2/lecture-07-connect-backend-to-the-database/notes"
+L8 = "https://100x-curriculum.vercel.app/c8/module-2/lecture-08-end-to-end-mvp/notes"
+# Revise links per subtopic. Empty ones are still to be filled in.
+NOTES = {
+    "Designing a Good Spec": "",
+    "Golden Dataset and Verifiers": "",
+    "Building the UI": "",
+    "Anatomy of an API Request": L4,
+    "HTTP Methods (CRUD)": L4,
+    "Status Codes": L4,
+    "The Process Layer": L5,
+    "Raw Requests in Python": L5,
+    "FastAPI and Validation": L7,
+    "Where Storage Lives": L6,
+    "Domain Modelling Concepts": L6,
+    "Database Integration": L8,
+}
+
 # One quiz per browser tab, kept in memory. It resets when the server restarts,
 # and on Vercel each request may land on a fresh machine. Supabase fixes both.
 SESSIONS = {}
@@ -100,27 +121,31 @@ def missing(pair, met):
     return [k for k in pair["key_points"] if k["id"] in gaps]
 
 
-def ask(s):
+def question(s):
     pair = s["pairs"][s["index"]]
-    return f"**Question {s['index'] + 1} of {len(s['pairs'])}: {pair['concept']}**\n\n{pair['question']}"
+    return {"kind": "question", "label": f"Question {s['index'] + 1}: {pair['concept']}", "text": pair["question"]}
 
 
-def finish(s):
+def done(s):
     total = len(s["pairs"])
     percent = round(100 * s["score"] / total)
     if percent >= 80:
-        label = "Mastered"
+        status, label = "mastered", "Mastered"
     elif percent >= 50:
-        label = "Getting there"
+        status, label = "getting", "Getting there"
     else:
-        label = "Needs work"
-    return (
-        f"**Set done: {s['score']:g} out of {total} ({percent}%). {label}.**\n\n"
-        "Send any message to retake this set, or pick another subtopic."
-    )
+        status, label = "needs", "Needs work"
+    return {
+        "kind": "done",
+        "status": status,
+        "heading": f"Set complete: {s['score']:g} out of {total} ({percent}%). {label}.",
+        "text": "Try the set again to beat your score, or pick another subtopic.",
+    }
 
 
-def next_question(s, points, reply):
+# Record the result, then either wait for "next" or close the set.
+def settle(s, points, card):
+    s["results"].append(points)
     s["score"] += points
     s["index"] += 1
     s["turns"] = []
@@ -128,8 +153,22 @@ def next_question(s, points, reply):
     s["follow_ups"] = 0
     if s["index"] < len(s["pairs"]):
         s["waiting"] = True
-        return reply + f"\n\nSay **next** when you're ready for question {s['index'] + 1}."
-    return reply + "\n\n" + finish(s)
+        return [card, {"kind": "next", "text": f"Say **next** when you're ready for question {s['index'] + 1}."}]
+    return [card, done(s)]
+
+
+def state(s):
+    return {
+        "topic": s["pairs"][0]["topic"],
+        "subtopic": s["subtopic"],
+        "notes_url": NOTES.get(s["subtopic"], ""),
+        "concepts": [p["concept"] for p in s["pairs"]],
+        "results": s["results"],
+        "index": s["index"],
+        "score": s["score"],
+        "waiting": s["waiting"],
+        "done": s["index"] >= len(s["pairs"]),
+    }
 
 
 def respond(session_id, subtopic, message):
@@ -142,23 +181,25 @@ def respond(session_id, subtopic, message):
             "pairs": [p for p in PAIRS if p["subtopic"] == subtopic],
             "index": 0,
             "score": 0,
+            "results": [],
             "turns": [],
             "met": set(),
             "follow_ups": 0,
             "waiting": False,
         }
         SESSIONS[session_id] = s
-        return (
-            f"**{subtopic}**: {len(s['pairs'])} questions. "
-            "Answer in your own words, the way you'd explain it to a classmate.\n\n" + ask(s)
-        )
+        intro = {
+            "kind": "intro",
+            "text": f"{len(s['pairs'])} questions on **{subtopic}**. Answer in your own words, the way you'd explain it to a classmate. There's no need for textbook phrasing.",
+        }
+        return [intro, question(s)], s
 
     # A question was just settled: wait until the learner asks for the next one.
     if s["waiting"]:
         if "next" in message.lower():
             s["waiting"] = False
-            return ask(s)
-        return f"Say **next** when you're ready for question {s['index'] + 1}."
+            return [question(s)], s
+        return [{"kind": "next", "text": f"Say **next** when you're ready for question {s['index'] + 1}."}], s
 
     pair = s["pairs"][s["index"]]
     if s["turns"]:
@@ -173,32 +214,36 @@ def respond(session_id, subtopic, message):
 
     if not gaps and not result.get("fail_if_hit"):
         if s["follow_ups"] == 0:
-            return next_question(s, 1, "**Passed.** " + result.get("note", ""))
-        return next_question(s, 0.5, "**Passed after a follow-up, half a point.** " + result.get("note", ""))
+            card = {"kind": "passed", "heading": "Nicely reasoned. 1 point.", "text": result.get("note", "")}
+            return settle(s, 1, card), s
+        card = {"kind": "half", "heading": "You got there. Half a point for the nudge.", "text": result.get("note", "")}
+        return settle(s, 0.5, card), s
 
     if s["follow_ups"] < MAX_FOLLOW_UPS:
         target = gaps[0] if gaps else pair["key_points"][0]
         follow_up = write_follow_up(pair, s, target)
         s["follow_ups"] += 1
         s["turns"].append((follow_up, ""))
-        if s["follow_ups"] == 1 and result.get("recited_sentence"):
-            lead = f"> {result['recited_sentence']}\n\nThat sentence sounds recited. "
+        quote = result.get("recited_sentence") if s["follow_ups"] == 1 else None
+        if quote:
+            heading = "This part sounds a little memorised."
+            text = "The rest is your own thinking. Let's dig into the underlined bit:"
         elif s["met"]:
-            lead = "You're partway there. "
+            heading = "You're on the right track."
+            text = result.get("note", "") + " One more piece to work out:"
         else:
-            lead = "Let's work it out a step at a time. "
-        return lead + "Think about this:\n\n**" + follow_up + "**"
+            heading = "No worries, let's take it one step at a time."
+            text = "Think about this:"
+        return [{"kind": "follow_up", "heading": heading, "text": text, "question": follow_up, "quote": quote}], s
 
-    # Out of nudges: explain the full answer, then show the whole answer key.
-    answer_key = "\n".join(
-        "- " + k["text"] + (" *(you had this)*" if k["id"] in s["met"] else "")
-        for k in pair["key_points"]
-    )
-    reply = (
-        "**Not yet, 0 points.** Here's the full answer:\n\n" + explain(pair, s)
-        + "\n\n**The answer key**\n" + answer_key
-    )
-    return next_question(s, 0, reply)
+    # Out of nudges: walk through the full answer, then show the whole answer key.
+    card = {
+        "kind": "missed",
+        "heading": "Let's walk through it together.",
+        "text": explain(pair, s),
+        "key_points": [{"text": k["text"], "had": k["id"] in s["met"]} for k in pair["key_points"]],
+    }
+    return settle(s, 0, card), s
 
 
 app = FastAPI()
@@ -220,7 +265,8 @@ def subtopics_route():
 def chat_route(body: ChatIn):
     if body.subtopic not in SUBTOPICS:
         raise HTTPException(400, "Unknown subtopic: " + body.subtopic)
-    return {"reply": respond(body.session_id, body.subtopic, body.message)}
+    messages, s = respond(body.session_id, body.subtopic, body.message)
+    return {"messages": messages, "state": state(s)}
 
 
 # Locally, serve the page too. On Vercel, public/ is served on its own.
