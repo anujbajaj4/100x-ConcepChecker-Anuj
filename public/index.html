@@ -175,6 +175,7 @@
   .card { padding: 16px 18px; border: 1.5px solid; border-radius: 12px; display: flex; flex-direction: column; gap: 8px; max-width: 62ch; font-size: 15px; color: var(--text); }
   .card .heading { font-weight: 600; }
   .card .ask { font-size: 16px; font-weight: 500; color: var(--ink); }
+  .card .said { color: var(--ink); line-height: 1.7; }
   .card ul { margin: 0; padding-left: 20px; }
   .card.follow_up { background: var(--amber-bg); border-color: var(--amber-line); }
   .card.follow_up .heading { color: var(--amber); }
@@ -270,7 +271,7 @@
     <div class="home-head">
       <div>
         <h2 id="root-title">Building APIs, UIs, and Backends</h2>
-        <p>Pick a subtopic to revise its notes or test yourself on it.</p>
+        <p>Pick a subtopic. Practise it in Aarav's world as often as you like, then take the real-world test: that one sets your score.</p>
       </div>
       <div class="legend">
         <div class="legend-items" role="group" aria-label="Highlight subtopics by status">
@@ -301,11 +302,15 @@
       <h2>This set</h2>
       <ol class="set" id="set"></ol>
     </section>
-    <section class="panel">
+    <section class="panel" id="score-panel">
       <h2>Score so far</h2>
       <p class="big"><span id="score">0</span> <span class="of" id="score-of"></span></p>
-      <div class="segs" id="segs" role="img" aria-label="Question results"></div>
-      <p class="small">A pass after a nudge counts as half. Your final score colours this subtopic on the map.</p>
+      <div class="segs" id="segs" role="img" aria-label="Results for each idea"></div>
+      <p class="small">Right on the first new case: 1 point. Right after one follow-up: half. Your final score colours this subtopic on the map.</p>
+    </section>
+    <section class="panel" id="practice-panel" hidden>
+      <h2>Practice</h2>
+      <p class="small">Nothing here is scored. Practise as often as you like, then take the real-world test: the same ideas, inside apps you use every day.</p>
     </section>
     <a class="notes" id="notes" target="_blank" rel="noopener">
       <b>Revise the notes</b>

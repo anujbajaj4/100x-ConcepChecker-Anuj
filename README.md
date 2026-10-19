@@ -25,47 +25,59 @@ Concept Check finds where a learner stops understanding and starts reciting. Pic
 ## The two interfaces
 
 - `public/index.html` is the page: a log-in screen, the mind map home, and the chat test. It holds no key, only the learner's own login token.
-- `app.py` is the server. `POST /api/signup` and `POST /api/login` go through Supabase Auth and return a token. `GET /api/home` returns every topic and subtopic with the learner's latest and best score. `POST /api/chat` takes `{"session_id", "subtopic", "message"}` and returns `{"messages", "state"}`: the reply cards to show, and the quiz state the sidebar draws (results so far, score, current question, notes link). Pydantic rejects any other package with a 422. The Groq key lives only here, read from `.env` locally and from Vercel's environment variables in production.
+- `app.py` is the server. `POST /api/signup` and `POST /api/login` go through Supabase Auth and return a token. `GET /api/home` returns every topic and subtopic with the learner's latest and best real-world score and how often they've practised it. `POST /api/chat` takes `{"test_id", "subtopic", "mode", "message", "simpler", "pasted"}` and returns `{"messages", "state"}`: the reply cards to show, and the state the sidebar draws. Pydantic rejects any other package with a 400. The Groq key lives only here, read from `.env` locally and from Vercel's environment variables in production.
 
 | Dial | `POST /api/chat` |
 |---|---|
 | Address | `/api/chat`, same origin as the page |
 | Action | POST |
 | Key | None from the browser. The server adds the Groq key itself |
-| Package | `{"session_id", "subtopic", "message"}` in, `{"messages", "state"}` out |
+| Package | `{"test_id", "subtopic", "mode", "message", "simpler", "pasted"}` in, `{"messages", "state"}` out |
 
 ## Storage
 
-Supabase holds two tables, created by `schema.sql`: `tests` (one row each time a learner presses Test, with where they are and the final score) and `attempts` (one row per question, with the points, the recited sentence and each follow-up's target key point). Learners and their hashed passwords live in Supabase Auth. `rest_check.py` exercises both tables with plain requests.
+Supabase holds two tables, created by `schema.sql`: `tests` (one row each time a learner starts Practice or the Real-world test, with its `mode`, where they are and the final score) and `attempts` (one row per idea, with the points, the recited sentence, the explanation's label, both cases, the follow-up and its reply, and whether answers were pasted). Learners and their hashed passwords live in Supabase Auth. `rest_check.py` exercises both tables with plain requests.
 
 ## How a set works
 
-1. The app asks the subtopic's questions from `golden_pairs.json`, one at a time.
-2. Each answer goes to `openai/gpt-oss-120b` on Groq with the grader prompt in `prompts.py`.
-3. If the answer misses a key point the pass rule needs, code picks that missing point and the model writes a stepping-stone question aimed only at it, building on what the learner got right. Up to two of these, each more concrete than the last. Credit carries across replies, so a point shown once stays shown.
-4. Pass on the first try: 1 point. Pass after a follow-up: half a point. Otherwise 0, and the app explains the full answer from the answer key, marking the parts you had. After each question, say "next" to move on.
-5. At the end you get the set score and a label: Mastered (80% and up), Getting there (50 to 79%), Needs work (under 50%).
+Each subtopic has two ideas, and every idea runs the same loop, taken from the hackathon brief:
+
+1. **Explain it** in your own words. Not scored. The model labels the explanation *own reasoning*, *recited*, *wrong* or *unclear*, and quotes the sentence that shows it. "Make it simpler" shows a gentler version of the prompt, written in advance. A pasted answer is recorded.
+2. **Case A**: a new situation with one short answer written in advance. Code checks it against the case's accept and reject words.
+3. If case A is wrong, or the explanation was recited or wrong: **one follow-up** aimed at the quoted sentence, then **case B**, a different situation chosen so the common wrong idea gets it wrong.
+
+| Explanation | Case A | Case B | Points |
+|---|---|---|---|
+| Own reasoning | right | (not asked) | 1 |
+| Recited | right | right / wrong | 1 / 0.5 |
+| Any | wrong | right / wrong | 0.5 / 0 |
+| Wrong | right (by luck, so it doesn't count) | right / wrong | 0.5 / 0 |
+
+There are two segments:
+
+- **Practice** uses cases set in Aarav's world. It's never scored, so learners who are still catching up can repeat it as often as they like.
+- **Real-world test** asks the same ideas inside apps people use every day: UPI, Swiggy, IRCTC, WhatsApp, banks. Only this segment's score colours the map: 80% and up is Mastered, 50 to 79% is Getting there, under 50% is Needs work.
 
 ## Who decides what
 
 | Code decides | AI decides |
 |---|---|
-| Which question comes next | Which key points the answer shows in the learner's own words |
-| Pass or fail, from the key points the model reports and the pass rule in `golden_pairs.json` | The recited sentence, quoted |
-| The score | The wording of each follow-up (code picks what it aims at) |
+| The ideas, the cases and their answers, all written in `golden_pairs.json` before any session | Whether an explanation is own reasoning, recited or wrong, and which sentence shows it |
+| Whether a case answer is right, from its accept and reject words | The wording of the one follow-up, aimed at that sentence |
+| The points and the score | Only when an answer hits neither word list: whether it means the same as the written answer |
 
-The model never decides on its own that a learner understands. The answer key is written before any session.
+The model never decides on its own that a learner understands. A pass is always a new case answered right.
 
 ## Files
 
 - `public/index.html` and `public/app.js`: the page and its code.
 - `app.py`: the FastAPI routes, the Groq call and the scoring. Run it with `python3 app.py`.
 - `.env.example`: the variable names to copy into your own `.env`.
-- `schema.sql` and `security.sql`: the tables, then the row level security policies and column rules. Run both in the Supabase SQL Editor.
+- `schema.sql`, `security.sql` and `segments.sql`: the tables, the row level security policies and column rules, then the practice/real-world `mode` column. Run them in that order in the Supabase SQL Editor.
 - `rest_check.py` and `rls_check.py`: plain-request checks of the tables and of row level security.
 - `vercel.json`: the security headers for the page on Vercel.
-- `prompts.py`: the grader, follow-up and explanation prompts.
-- `golden_pairs.json`: 54 questions with key points and pass rules across 12 subtopics.
+- `prompts.py`: the four narrow prompts: label the explanation, write the follow-up, compare a short answer, walk through the answers.
+- `golden_pairs.json`: 24 ideas, 2 per subtopic. Each has an explain prompt and a simpler version, what understanding looks like, the common wrong idea, stock phrases, a follow-up seed, 2 practice cases and 2 real-world cases.
 
 Quiz state is kept in the server's memory for now. It resets when the server restarts, and on Vercel a request can land on a fresh machine, so a quiz may lose its place there. Saving it to Supabase is next.
 

@@ -200,7 +200,7 @@ function drawSuggest() {
   subs.forEach((s) => (s.suggested = pick && s.i === pick.i));
   $("suggest").hidden = false;
   $("suggest").innerHTML = "<p>" + text + "</p>" + (pick
-    ? '<div class="actions" style="margin:0"><button class="btn" type="button" data-act="show" data-i="' + pick.i + '">Show on map</button><button class="btn primary" type="button" data-act="test" data-i="' + pick.i + '">Test it now</button></div>'
+    ? '<div class="actions" style="margin:0"><button class="btn" type="button" data-act="show" data-i="' + pick.i + '">Show on map</button><button class="btn" type="button" data-act="practice" data-i="' + pick.i + '">Practise</button><button class="btn primary" type="button" data-act="real" data-i="' + pick.i + '">Real-world test</button></div>'
     : "");
 }
 
@@ -278,15 +278,16 @@ function popContent(s) {
     if (s.best > s.latest) status += ", best " + s.best + "%";
     status += ", " + s.tests + (s.tests === 1 ? " test" : " tests");
   }
-  const concepts = s.concepts.length > 1 ? s.concepts.slice(0, -1).join(", ") + " and " + s.concepts.at(-1) : s.concepts.join("");
+  const practised = s.practised ? "Practised " + s.practised + (s.practised === 1 ? " time" : " times") : "Not practised yet";
   return '<div class="pop-head"><div><p class="pop-topic">' + escape(s.topic) + '</p><h3 id="pop-title">' + escape(s.title) + "</h3>"
     + '<p class="pop-status" style="color:' + st.strong + '">' + status + '</p></div><button class="x" type="button" data-act="close" aria-label="Close">' + CLOSE + "</button></div>"
-    + '<p class="pop-covers">Covers ' + escape(concepts) + ".</p>"
+    + '<p class="pop-covers">' + s.ideas.map(escape).join("<br>") + "</p>"
     + '<div class="pop-actions">'
     + (s.notes_url
       ? '<a class="pop-btn" href="' + escape(s.notes_url) + '" target="_blank" rel="noopener"><b>Revise</b><small>Open the notes in a new tab</small></a>'
       : '<span class="pop-btn off"><b>Revise</b><small>Notes for this one are coming soon</small></span>')
-    + '<button class="pop-btn primary" type="button" data-act="test" data-i="' + s.i + '"><b>' + (s.latest == null ? "Test" : "Retake test") + "</b><small>" + s.questions + " questions, answered in chat</small></button>"
+    + '<button class="pop-btn" type="button" data-act="practice" data-i="' + s.i + '"><b>Practise</b><small>' + practised + ". Aarav's world, never scored</small></button>"
+    + '<button class="pop-btn primary" type="button" data-act="real" data-i="' + s.i + '"><b>' + (s.latest == null ? "Real-world test" : "Retake real-world test") + "</b><small>Everyday apps. This one counts</small></button>"
     + "</div>";
 }
 
@@ -310,7 +311,7 @@ function select(i, focusTest = true) {
     el.hidden = +el.dataset.detail !== i;
     if (!el.hidden) el.innerHTML = popContent(s);
   });
-  if (focusTest) pop.querySelector('[data-act="test"]')?.focus({ preventScroll: true });
+  if (focusTest) pop.querySelector('[data-act="practice"]')?.focus({ preventScroll: true });
 }
 
 function closePop() {
@@ -348,7 +349,7 @@ $("home").addEventListener("click", (e) => {
   const act = e.target.closest("[data-act]");
   if (act) {
     if (act.dataset.act === "close") return closePop();
-    if (act.dataset.act === "test") return start(subs[act.dataset.i].title);
+    if (act.dataset.act === "practice" || act.dataset.act === "real") return start(subs[act.dataset.i].title, act.dataset.act);
     if (act.dataset.act === "show") {
       select(+act.dataset.i);
       // Scroll to whichever copy is on screen: the map on wide screens, the list on phones.
@@ -392,10 +393,12 @@ function toast(text) {
 }
 
 // --- Test: the chat ---
-let testId = null, subtopic = null;
+let testId = null, subtopic = null, mode = "real";
+let pasted = false;  // did the learner paste into the answer box since their last send?
 
-function start(name) {
+function start(name, segment) {
   subtopic = name;
+  mode = segment;
   testId = null;
   log.innerHTML = "";
   showView("test");
@@ -405,15 +408,17 @@ function start(name) {
 
 // Create: send one message, get the replies and the test's state back.
 // Address: /api/chat. Action: POST. Package: JSON. Key: your login cookie, never the Groq key.
-async function talk(text, show = true) {
+async function talk(text, show = true, simpler = false) {
   if (show) addMine(text);
-  const waiting = addRow('<p class="thinking">' + (show ? "Checking your answer…" : "Loading questions…") + "</p>");
+  const waiting = addRow('<p class="thinking">' + (show ? "Checking your answer…" : simpler ? "Finding a simpler way to ask…" : "Loading the first idea…") + "</p>");
+  const sentPasted = pasted;
+  pasted = false;
   send.disabled = true;
   try {
     const r = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ test_id: testId, subtopic: subtopic, message: text }),
+      body: JSON.stringify({ test_id: testId, subtopic: subtopic, mode: mode, message: text, simpler: simpler, pasted: sentPasted }),
     });
     const data = await r.json();
     waiting.remove();
@@ -463,48 +468,62 @@ function scrollDown() {
 
 function addBot(m) {
   if (m.kind === "intro") return addRow(render(m.text));
-  if (m.kind === "question") {
-    log.querySelectorAll(".next-actions").forEach((el) => el.remove());
+  if (m.kind === "explain") {
+    log.querySelectorAll(".next-actions, .simpler-actions").forEach((el) => el.remove());
+    const row = addRow('<span class="label">' + escape(m.label) + "</span>" + render(m.text)
+      + (m.can_simplify ? '<div class="actions simpler-actions"><button class="btn" type="button">Make it simpler</button></div>' : ""));
+    const button = row.querySelector(".simpler-actions button");
+    if (button) button.onclick = () => { button.parentElement.remove(); talk("Make it simpler", false, true); };
+    return;
+  }
+  if (m.kind === "case") {
+    log.querySelectorAll(".simpler-actions").forEach((el) => el.remove());
     return addRow('<span class="label">' + escape(m.label) + "</span>" + render(m.text));
   }
   if (m.kind === "next") {
-    const row = addRow(render(m.text) + '<div class="actions next-actions"><button class="btn" type="button">Next question</button></div>', false);
+    const row = addRow(render(m.text) + '<div class="actions next-actions"><button class="btn" type="button">Next idea</button></div>', false);
     row.querySelector("button").onclick = (e) => { e.target.disabled = true; talk("next"); };
     return;
   }
   let inner = '<p class="heading">' + escape(m.heading) + "</p>";
   if (m.text) inner += render(m.text);
   if (m.kind === "follow_up") {
+    // Show the sentence here too: by now it has usually scrolled out of view above.
+    if (m.quote) inner += '<p class="said">You said: <mark class="recited">' + escape(m.quote) + "</mark></p>";
     inner += '<p class="ask">' + escape(m.question) + "</p>";
     if (m.quote) markQuote(m.quote);
   }
   if (m.kind === "missed") {
-    inner += '<p class="heading">The full answer</p><ul>' + m.key_points.map((k) =>
+    inner += '<p class="heading">The answers</p><ul>' + m.key_points.map((k) =>
       "<li>" + escape(k.text) + (k.had ? ' <span class="had">(you had this)</span>' : "") + "</li>").join("") + "</ul>";
   }
-  const row = addRow('<div class="card ' + m.kind + '">' + inner + (m.kind === "done" ? '<div class="actions"><button class="btn primary" type="button" data-act="map">See it on the map</button><button class="btn" type="button" data-act="again">Try this set again</button></div>' : "") + "</div>", false);
+  // A finished practice set points to the real-world test; a finished test points to the map.
+  const doneActions = m.mode === "practice"
+    ? '<div class="actions"><button class="btn primary" type="button" data-act="real">Take the real-world test</button><button class="btn" type="button" data-act="map">Back to the map</button></div>'
+    : '<div class="actions"><button class="btn primary" type="button" data-act="map">See it on the map</button><button class="btn" type="button" data-act="practice">Practise again</button></div>';
+  const row = addRow('<div class="card ' + m.kind + '">' + inner + (m.kind === "done" ? doneActions : "") + "</div>", false);
   if (m.kind === "done") {
     row.querySelector('[data-act="map"]').onclick = showHome;
-    row.querySelector('[data-act="again"]').onclick = () => start(subtopic);
+    row.querySelector('[data-act="real"], [data-act="practice"]').onclick = (e) => start(subtopic, e.target.dataset.act);
   }
 }
 
-// Underline the memorised sentence inside your last message.
+// Underline the quoted sentence inside the message where you wrote it.
 function markQuote(quote) {
-  const bubbles = log.querySelectorAll(".mine");
-  const bubble = bubbles[bubbles.length - 1];
+  const bubble = [...log.querySelectorAll(".mine")].reverse().find((b) => b.textContent.includes(quote));
   if (!bubble) return;
   const text = bubble.textContent, i = text.indexOf(quote);
-  if (i < 0) return;
   bubble.innerHTML = escape(text.slice(0, i)) + '<mark class="recited">' + escape(quote) + "</mark>" + escape(text.slice(i + quote.length));
 }
 
 function drawState(s) {
-  $("topic").textContent = s.topic;
+  $("topic").textContent = s.mode_label + ": " + s.topic;
   $("title").textContent = s.subtopic;
-  const total = s.concepts.length;
-  $("count").innerHTML = s.done ? "Set complete" : "Question <strong>" + (s.index + 1) + "</strong> of " + total;
-  $("set").innerHTML = s.concepts.map((c, i) => {
+  const total = s.ideas.length;
+  $("count").innerHTML = s.done ? "Set complete" : "Idea <strong>" + (s.index + 1) + "</strong> of " + total;
+  $("score-panel").hidden = s.mode === "practice";
+  $("practice-panel").hidden = s.mode !== "practice";
+  $("set").innerHTML = s.ideas.map((c, i) => {
     let icon, cls, state = "";
     if (i < s.results.length) {
       const [key, label, color] = RESULT[s.results[i]];
@@ -518,7 +537,7 @@ function drawState(s) {
   }).join("");
   $("score").textContent = s.score;
   $("score-of").textContent = "out of " + s.results.length + " answered";
-  $("segs").innerHTML = s.concepts.map((_, i) => {
+  $("segs").innerHTML = s.ideas.map((_, i) => {
     const color = i < s.results.length ? SEG[s.results[i]] : i === s.index && !s.done ? "#1E2B45" : "";
     return "<span" + (color ? ' style="background:' + color + '"' : "") + "></span>";
   }).join("");
@@ -528,7 +547,7 @@ function drawState(s) {
 }
 
 $("end").onclick = () => {
-  if (confirm("End this test? Answers so far are saved, but the test won't get a score.")) showHome();
+  if (confirm(mode === "practice" ? "Leave this practice set?" : "End this test? Answers so far are saved, but the test won't get a score.")) showHome();
 };
 $("back").onclick = (e) => { e.preventDefault(); showHome(); };
 
@@ -539,6 +558,9 @@ $("form").onsubmit = (e) => {
   message.value = "";
   talk(text);
 };
+
+// A pasted answer is recorded with it, so we can tell copied text from typed reasoning.
+message.addEventListener("paste", () => { pasted = true; });
 
 // Enter sends, Shift+Enter adds a line.
 message.addEventListener("keydown", (e) => {

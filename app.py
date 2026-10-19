@@ -1,9 +1,11 @@
 import json
 import os
+import re
 import time
 from collections import defaultdict, deque
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Literal
 
 import requests
 from dotenv import load_dotenv
@@ -14,7 +16,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
 from supabase import ClientOptions, create_client
 
-from prompts import EXPLAIN_PROMPT, FOLLOW_UP_PROMPT, GRADER_PROMPT
+from prompts import FOLLOW_UP_PROMPT, LABEL_PROMPT, SAME_ANSWER_PROMPT, WALKTHROUGH_PROMPT
 
 # This folder holds prompts.py, golden_pairs.json, public/ and your .env.
 ROOT = Path(__file__).resolve().parent
@@ -23,9 +25,11 @@ ROOT = Path(__file__).resolve().parent
 # On Vercel there is no .env; the key comes from the project's environment variables.
 load_dotenv(ROOT / ".env")
 
-PAIRS = json.load(open(ROOT / "golden_pairs.json"))["pairs"]
-SUBTOPICS = list(dict.fromkeys(p["subtopic"] for p in PAIRS))
-MAX_FOLLOW_UPS = 2
+IDEAS = json.load(open(ROOT / "golden_pairs.json"))["ideas"]
+SUBTOPICS = list(dict.fromkeys(i["subtopic"] for i in IDEAS))
+# Two segments. Practice is set in Aarav's world and never scored. The real-world test
+# asks the same ideas inside apps people use every day, and only it colours the map.
+MODES = {"practice": "Practice", "real": "Real-world test"}
 
 L4 = "https://100x-curriculum.vercel.app/c8/module-2/lecture-04-the-second-interface/post-lecture/notes"
 L5 = "https://100x-curriculum.vercel.app/c8/module-2/lecture-05-building-apis/notes"
@@ -51,21 +55,6 @@ NOTES = {
 }
 
 ROOT_TITLE = "Building APIs, UIs, and Backends"
-# The concepts inside each subtopic, shown on the map. They live in the notes and questions.
-CONCEPTS = {
-    "Designing a Good Spec": ["Observation", "Hypothesis", "Named User"],
-    "Golden Dataset and Verifiers": ["Golden Pairs", "Verifier", "Test-Driven Development"],
-    "Building the UI": ["Interface Choice", "Gradio Library", "Manual MVP"],
-    "Anatomy of an API Request": ["Address", "Action", "Key", "Package"],
-    "HTTP Methods (CRUD)": ["Create (POST)", "Read (GET)", "Update (PUT or PATCH)", "Delete (DELETE)"],
-    "Status Codes": ["2xx success", "4xx client errors", "5xx server errors"],
-    "The Process Layer": ["Prompt plus input", "Deterministic systems", "Abstraction vs understanding"],
-    "Raw Requests in Python": ["requests library", "Environment variables", "Model integration"],
-    "FastAPI and Validation": ["FastAPI framework", "Pydantic validation", "Server deployment"],
-    "Where Storage Lives": ["Client storage", "Server storage", "File persistence"],
-    "Domain Modelling Concepts": ["Entities", "Attributes", "Relationships"],
-    "Database Integration": ["PostgreSQL", "Supabase", "Row Level Security"],
-}
 
 
 # --- Keys: the least power that does the job ------------------------------------
@@ -122,158 +111,118 @@ def ask_groq(system, user):
     return json.loads(r.json()["choices"][0]["message"]["content"])
 
 
-# Each turn is [what was asked, the learner's answer, the key point a follow-up aimed at].
-def conversation(s):
-    lines = ["Learner's first answer: " + s["turns"][0][1]]
-    for turn in s["turns"][1:]:
-        lines.append("Follow-up: " + turn[0] + "\nLearner's reply: " + turn[1])
-    return "\n\n".join(lines)
+# --- Checking a short answer: code first ---------------------------------------------
+# Every case has one short answer, written before the session, plus words that count as
+# right (accept) and words that give a wrong answer away (reject). Code checks those.
+# Only when an answer hits neither list, or both, does the model answer one narrow
+# question: "does this mean the same as the written answer?"
+ENDINGS = ("", "s", "es", "ed", "d", "ing")  # pay matches pays, paid doesn't: keep both in the lists
+UNSURE = ("no idea", "not sure", "dont know", "don t know", "do not know", "idk", "no clue")
 
 
-def key_point_text(pair, ids):
-    return "\n".join(k["id"] + ": " + k["text"] for k in pair["key_points"] if k["id"] in ids)
+def words(text):
+    text = " " + re.sub(r"[^a-z0-9₹]+", " ", text.lower()).strip() + " "
+    for phrase in UNSURE:  # "no idea" must not count as the answer "no"
+        text = text.replace(" " + phrase + " ", " ")
+    return text.split()
 
 
-# AI decides: which key points the conversation shows, and the recited sentence.
-def grade(pair, s):
-    v = pair["verifier"]
-    all_ids = [k["id"] for k in pair["key_points"]]
-    user = (
-        "Question:\n" + pair["question"]
-        + "\n\nKey points:\n" + key_point_text(pair, all_ids)
-        + "\n\nRecitation phrases:\n" + ", ".join(v["recitation_flags"])
-        + "\n\nMisconceptions:\n" + "; ".join(v["fail_if"])
-        + "\n\nConversation so far:\n" + conversation(s)
+def mentions(answer, phrase):
+    said, want = words(answer), words(phrase)
+    for start in range(len(said) - len(want) + 1):
+        if all(any(said[start + k] == w + end for end in ENDINGS) for k, w in enumerate(want)):
+            return True
+    return False
+
+
+def check(case, answer):
+    hit = any(mentions(answer, p) for p in case["accept"])
+    miss = any(mentions(answer, p) for p in case["reject"])
+    if hit and not miss:
+        return True, "code"
+    if miss and not hit:
+        return False, "code"
+    user = f"Question: {case['scenario']}\nCorrect answer: {case['answer']}\nLearner's answer: {answer}"
+    return bool(ask_groq(SAME_ANSWER_PROMPT, user).get("same")), "model"
+
+
+# --- The model's narrow jobs -----------------------------------------------------------
+def idea_brief(idea):
+    return (
+        "Idea: " + idea["idea"]
+        + "\nWhat real understanding looks like: " + idea["understanding"]
+        + "\nThe most common wrong idea: " + idea["misconception"]
     )
-    return ask_groq(GRADER_PROMPT, user)
 
 
-# AI writes the nudge, but code picks which missing piece it aims at.
-def write_follow_up(pair, s, target):
-    got_right = key_point_text(pair, s["met"]) or "Nothing yet."
+# AI decides: is the explanation their own reasoning, recited, wrong, or unclear?
+def label(idea, explanation):
     user = (
-        "Original question:\n" + pair["question"]
-        + "\n\nConversation so far:\n" + conversation(s)
-        + "\n\nWhat they already got right:\n" + got_right
-        + "\n\nThe missing piece:\n" + target["text"]
-        + "\n\nThis is follow-up number " + str(s["follow_ups"] + 1) + " of " + str(MAX_FOLLOW_UPS) + "."
+        idea_brief(idea)
+        + "\nStock phrases people recite: " + ", ".join(idea["recitation_markers"])
+        + "\n\nLearner's explanation:\n" + explanation
     )
-    return ask_groq(FOLLOW_UP_PROMPT, user).get("follow_up", "What would happen next in this exact scenario?")
+    r = ask_groq(LABEL_PROMPT, user)
+    kind = r.get("label") if r.get("label") in ("own", "recited", "wrong", "unclear") else "unclear"
+    quote = r.get("quote") if kind in ("recited", "wrong") else None
+    return kind, quote
 
 
-# AI explains the full answer, using only the answer key.
-def explain(pair, s):
-    answer_key = key_point_text(pair, [k["id"] for k in pair["key_points"]])
+# AI writes the one follow-up, aimed at the sentence it quoted.
+def write_follow_up(idea, s):
     user = (
-        "Original question:\n" + pair["question"]
-        + "\n\nConversation so far:\n" + conversation(s)
-        + "\n\nFull answer key:\n" + answer_key
-        + "\n\nWhat they already showed:\n" + (key_point_text(pair, s["met"]) or "Nothing yet.")
+        idea_brief(idea)
+        + "\n\nLearner's explanation:\n" + s["explanation"]
+        + "\n\nSentence to aim at (" + str(s["label"]) + "): " + (s["quote"] or "none")
+        + "\nA question you could build on: " + idea["follow_up_seed"]
     )
-    return ask_groq(EXPLAIN_PROMPT, user).get("explanation", "")
+    return ask_groq(FOLLOW_UP_PROMPT, user).get("follow_up") or idea["follow_up_seed"]
 
 
-# Code decides: which pass-rule key points are still missing.
-def missing(pair, met):
-    v = pair["verifier"]
-    gaps = [k for k in v["required"] if k not in met]
-    if v["any_of"] and not met & set(v["any_of"]):
-        gaps.append(v["any_of"][0])
-    return [k for k in pair["key_points"] if k["id"] in gaps]
+# AI walks through the answers, using only the cases and their written answers.
+def walkthrough(idea, s, case_a, case_b):
+    user = (
+        idea_brief(idea)
+        + "\n\nLearner's explanation:\n" + s["explanation"]
+        + "\nSentence that sounded " + str(s["label"]) + ": " + (s["quote"] or "none")
+        + f"\n\nCase 1: {case_a['scenario']}\nCorrect answer: {case_a['answer']}\nLearner said: {s['a']['answer']}"
+        + f"\n\nCase 2: {case_b['scenario']}\nCorrect answer: {case_b['answer']}\nLearner said: {s['b']['answer']}"
+    )
+    return ask_groq(WALKTHROUGH_PROMPT, user).get("walkthrough", "")
 
 
-def question(s):
-    pair = s["pairs"][s["index"]]
-    return {"kind": "question", "label": f"Question {s['index'] + 1}: {pair['concept']}", "text": pair["question"]}
+# --- One test, step by step ------------------------------------------------------------
+# For each idea: explain → case A → (if needed) one follow-up → case B.
+#   own reasoning + case A right               → 1
+#   recited + case A right → case B right      → 1, wrong → 0.5
+#   case A wrong, or a wrong explanation       → case B right → 0.5, wrong → 0
+# A right answer under a wrong explanation doesn't count: it was right by luck.
+def ideas_for(subtopic):
+    return [i for i in IDEAS if i["subtopic"] == subtopic]
 
 
-def done(s):
-    total = len(s["pairs"])
-    percent = round(100 * s["score"] / total)
-    if percent >= 80:
-        status, label = "mastered", "Mastered"
-    elif percent >= 50:
-        status, label = "getting", "Getting there"
-    else:
-        status, label = "needs", "Needs work"
+def cases(s, idea):
+    return idea["practice"] if s["mode"] == "practice" else idea["real_world"]
+
+
+def fresh_idea():
     return {
-        "kind": "done",
-        "status": status,
-        "heading": f"Set complete: {s['score']:g} out of {total} ({percent}%). {label}.",
-        "text": "Your score is saved, and the map shows it. Try the set again to beat it, or head back to the map.",
+        "stage": "explain", "explanation": "", "label": None, "quote": None,
+        "simpler_used": False, "asked_again": False, "pasted": False,
+        "a": None, "follow_up": None, "reply": None, "b": None,
     }
 
 
-def percent(s):
-    return round(100 * s["score"] / len(s["pairs"]))
-
-
-# Record the result, then either wait for "next" or close the set.
-def settle(s, points, card):
-    pair = s["pairs"][s["index"]]
-    # The attempt row for this question, saved by chat_route. Each follow-up keeps the
-    # key point it aimed at: the retry points at the gap it was meant to close.
-    s["new_attempts"].append({
-        "question_id": pair["id"],
-        "points": points,
-        "recited_sentence": s["recited"],
-        "turns": [{"asked": t[0], "answer": t[1], "aimed_at": t[2]} for t in s["turns"]],
-    })
-    s["results"].append(points)
-    s["score"] += points
-    s["index"] += 1
-    s["turns"] = []
-    s["met"] = set()
-    s["follow_ups"] = 0
-    s["recited"] = None
-    if s["index"] < len(s["pairs"]):
-        s["waiting"] = True
-        return [card, {"kind": "next", "text": f"Say **next** when you're ready for question {s['index'] + 1}."}]
-    return [card, done(s)]
-
-
-def state(s):
-    return {
-        "topic": s["pairs"][0]["topic"],
-        "subtopic": s["subtopic"],
-        "notes_url": NOTES.get(s["subtopic"], ""),
-        "concepts": [p["concept"] for p in s["pairs"]],
-        "results": s["results"],
-        "index": s["index"],
-        "score": s["score"],
-        "waiting": s["waiting"],
-        "done": s["index"] >= len(s["pairs"]),
-    }
-
-
-def new_test(subtopic):
-    return {
-        "subtopic": subtopic,
-        "pairs": [p for p in PAIRS if p["subtopic"] == subtopic],
-        "index": 0,
-        "score": 0,
-        "results": [],
-        "turns": [],
-        "met": set(),
-        "follow_ups": 0,
-        "waiting": False,
-        "recited": None,
-        "new_attempts": [],
-    }
-
-
-def intro(s):
-    return {
-        "kind": "intro",
-        "text": f"{len(s['pairs'])} questions on **{s['subtopic']}**. Answer in your own words, the way you'd explain it to a classmate. There's no need for textbook phrasing.",
-    }
+def new_test(subtopic, mode):
+    s = {"subtopic": subtopic, "mode": mode, "index": 0, "score": 0, "results": [], "waiting": False, **fresh_idea()}
+    s["items"] = ideas_for(subtopic)
+    s["new_attempts"] = []
+    return s
 
 
 # What goes in the tests.state column: everything except what code can rebuild.
 def stored(s):
-    keep = {k: v for k, v in s.items() if k not in ("pairs", "met", "new_attempts")}
-    keep["met"] = sorted(s["met"])
-    return keep
+    return {k: v for k, v in s.items() if k not in ("items", "new_attempts")}
 
 
 def load_test(db, test_id):
@@ -281,70 +230,192 @@ def load_test(db, test_id):
     # test comes back empty, exactly as if it didn't exist, so we answer 403: you're
     # logged in, but this isn't yours to open.
     rows = db.table("tests").select("state").eq("id", test_id).execute().data
-    if not rows:
+    if not rows or "mode" not in rows[0]["state"]:
         raise HTTPException(403, "That test isn't yours to open. Start a new one from the map.")
     s = rows[0]["state"]
-    s["pairs"] = [p for p in PAIRS if p["subtopic"] == s["subtopic"]]
-    s["met"] = set(s["met"])
+    s["items"] = ideas_for(s["subtopic"])
     s["new_attempts"] = []
     return s
 
 
-def respond(s, message):
-    if s["index"] >= len(s["pairs"]):
-        return [{"kind": "next", "text": "This test is complete. Try the set again, or head back to the map."}]
+def intro(s):
+    n, name = len(s["items"]), s["subtopic"]
+    if s["mode"] == "practice":
+        text = f"**Practice: {n} ideas on {name}**, set in Aarav's world. Nothing here is scored, so take your time. Explain each idea in your own words first; there's no need for textbook phrasing."
+    else:
+        text = f"**Real-world test: {n} ideas on {name}**, set in apps you use every day. This one counts towards your score. Explain each idea in your own words first, then try it on a new case."
+    return {"kind": "intro", "text": text}
 
-    # A question was just settled: wait until the learner asks for the next one.
+
+def explain_card(s, simpler=False):
+    idea = s["items"][s["index"]]
+    return {
+        "kind": "explain",
+        "label": f"Idea {s['index'] + 1} of {len(s['items'])}: {idea['idea']}",
+        "text": idea["simpler"] if simpler else idea["explain"],
+        "can_simplify": not simpler and not s["simpler_used"],
+    }
+
+
+def case_card(s, which):
+    a, b = cases(s, s["items"][s["index"]])
+    return {"kind": "case", "label": "A new case" if which == "a" else "One more new case", "text": (a if which == "a" else b)["scenario"]}
+
+
+def next_card(s):
+    return {"kind": "next", "text": f"Say **next** when you're ready for idea {s['index'] + 1}."}
+
+
+def points_phrase(s, points):
+    if s["mode"] == "practice":
+        return ""
+    return {1: " 1 point.", 0.5: " Half a point.", 0: ""}[points]
+
+
+def done(s):
+    total = len(s["items"])
+    if s["mode"] == "practice":
+        return {
+            "kind": "done", "mode": "practice", "status": None,
+            "heading": "Practice complete.",
+            "text": "Practice never counts towards your score. When you're ready, take the real-world test: the same ideas, inside apps you use every day.",
+        }
+    pct = percent(s)
+    status, word = ("mastered", "Mastered") if pct >= 80 else ("getting", "Getting there") if pct >= 50 else ("needs", "Needs work")
+    return {
+        "kind": "done", "mode": "real", "status": status,
+        "heading": f"Real-world test complete: {s['score']:g} out of {total} ({pct}%). {word}.",
+        "text": "Your score is saved, and the map shows it. Practise again any time, or retake the test to beat it.",
+    }
+
+
+def percent(s):
+    return round(100 * s["score"] / len(s["items"]))
+
+
+# Record this idea's attempt, then wait for "next" or close the set.
+def settle(s, points, card):
+    idea = s["items"][s["index"]]
+    # The attempt row. case_b points back at the quoted sentence and follow-up:
+    # the retry points at the gap it was meant to close.
+    s["new_attempts"].append({
+        "question_id": idea["id"],
+        "points": points,
+        "recited_sentence": s["quote"] if s["label"] == "recited" else None,
+        "turns": {
+            "mode": s["mode"], "explanation": s["explanation"], "label": s["label"], "quote": s["quote"],
+            "pasted": s["pasted"], "case_a": s["a"], "follow_up": s["follow_up"], "reply": s["reply"], "case_b": s["b"],
+        },
+    })
+    s["results"].append(points)
+    s["score"] += points
+    s["index"] += 1
+    s.update(fresh_idea())
+    if s["index"] < len(s["items"]):
+        s["waiting"] = True
+        return [card, next_card(s)]
+    s["stage"] = "done"
+    return [card, done(s)]
+
+
+def respond(s, message, simpler=False, pasted=False):
+    if s["stage"] == "done":
+        return [{"kind": "next", "text": "This set is complete. Head back to the map to practise again or take a test."}]
+
+    # An idea was just settled: wait until the learner asks for the next one.
     if s["waiting"]:
         if "next" in message.lower():
             s["waiting"] = False
-            return [question(s)]
-        return [{"kind": "next", "text": f"Say **next** when you're ready for question {s['index'] + 1}."}]
+            return [explain_card(s)]
+        return [next_card(s)]
 
-    pair = s["pairs"][s["index"]]
-    if s["turns"]:
-        s["turns"][-1][1] = message
-    else:
-        s["turns"].append([pair["question"], message, None])
+    idea = s["items"][s["index"]]
+    case_a, case_b = cases(s, idea)
 
-    result = grade(pair, s)
-    # Credit carries across replies: a point shown once stays shown.
-    s["met"] |= set(result.get("key_points_met", []))
-    s["recited"] = s["recited"] or result.get("recited_sentence")
-    gaps = missing(pair, s["met"])
+    # "Make it simpler": the gentler version of the explain prompt, written in advance.
+    if simpler:
+        if s["stage"] == "explain" and not s["simpler_used"]:
+            s["simpler_used"] = True
+            return [explain_card(s, simpler=True)]
+        return []
 
-    if not gaps and not result.get("fail_if_hit"):
-        if s["follow_ups"] == 0:
-            card = {"kind": "passed", "heading": "Nicely reasoned. 1 point.", "text": result.get("note", "")}
+    # 1. The explanation. Not scored: it tells us which sentence to aim the follow-up at.
+    if s["stage"] == "explain":
+        s["explanation"] = (s["explanation"] + "\n" + message).strip()
+        s["pasted"] = s["pasted"] or pasted
+        kind, quote = label(idea, s["explanation"])
+        if kind == "unclear" and not s["asked_again"]:
+            s["asked_again"] = s["simpler_used"] = True
+            return [{"kind": "explain", "label": "Let's try it a simpler way", "text": idea["simpler"], "can_simplify": False}]
+        s["label"], s["quote"] = kind, quote
+        s["stage"] = "case_a"
+        return [{"kind": "intro", "text": "Thanks. Now try the idea on a new case:"}, case_card(s, "a")]
+
+    # 2. Case A: the "before" measure.
+    if s["stage"] == "case_a":
+        right, how = check(case_a, message)
+        s["a"] = {"answer": message, "right": right, "checked_by": how, "pasted": pasted}
+        if right and s["label"] in ("own", "unclear"):
+            card = {"kind": "passed", "heading": "You understood it and applied it." + points_phrase(s, 1), "text": "That's the idea working on a case you hadn't seen."}
             return settle(s, 1, card)
-        card = {"kind": "half", "heading": "You got there. Half a point for the nudge.", "text": result.get("note", "")}
-        return settle(s, 0.5, card)
-
-    if s["follow_ups"] < MAX_FOLLOW_UPS:
-        target = gaps[0] if gaps else pair["key_points"][0]
-        follow_up = write_follow_up(pair, s, target)
-        s["follow_ups"] += 1
-        s["turns"].append([follow_up, "", target["id"]])
-        quote = result.get("recited_sentence") if s["follow_ups"] == 1 else None
-        if quote:
-            heading = "This part sounds a little memorised."
-            text = "The rest is your own thinking. Let's dig into the underlined bit:"
-        elif s["met"]:
-            heading = "You're on the right track."
-            text = result.get("note", "") + " One more piece to work out:"
+        s["follow_up"] = write_follow_up(idea, s)
+        s["stage"] = "follow_up"
+        if s["label"] == "recited":
+            heading = "Right answer, but one sentence sounded memorised." if right else "Not quite. Let's look at one sentence you wrote."
+            text = "Let's turn the underlined part into a reason:"
+        elif s["label"] == "wrong":
+            heading = "You got the case. Let's test the reason you gave." if right else "Not quite. Let's test one sentence you wrote."
+            text = "Take the underlined part:"
         else:
-            heading = "No worries, let's take it one step at a time."
+            heading = "Not quite. Let's work it out a step at a time."
             text = "Think about this:"
-        return [{"kind": "follow_up", "heading": heading, "text": text, "question": follow_up, "quote": quote}]
+        return [{"kind": "follow_up", "heading": heading, "text": text, "question": s["follow_up"], "quote": s["quote"]}]
 
-    # Out of nudges: walk through the full answer, then show the whole answer key.
+    # 3. The follow-up reply. Not scored: it's the retry, kept with the gap it answers.
+    if s["stage"] == "follow_up":
+        s["reply"] = message
+        s["stage"] = "case_b"
+        return [{"kind": "intro", "text": "Thanks. Now one more new case:"}, case_card(s, "b")]
+
+    # 4. Case B: the "after" measure, built so the common wrong idea gets it wrong.
+    right, how = check(case_b, message)
+    s["b"] = {"answer": message, "right": right, "checked_by": how, "pasted": pasted}
+    a_counts = s["a"]["right"] and s["label"] != "wrong"
+    if right:
+        points = 1 if a_counts else 0.5
+        if a_counts:
+            card = {"kind": "passed", "heading": "Now you can explain it, not just recite it." + points_phrase(s, points), "text": "You turned the underlined phrase into a real reason."}
+        else:
+            card = {"kind": "half", "heading": "You worked it out." + points_phrase(s, points), "text": f"That's a case you hadn't seen. For the first case, the answer was: {case_a['answer']}."}
+        return settle(s, points, card)
+    points = 0.5 if a_counts else 0
     card = {
         "kind": "missed",
-        "heading": "Let's walk through it together.",
-        "text": explain(pair, s),
-        "key_points": [{"text": k["text"], "had": k["id"] in s["met"]} for k in pair["key_points"]],
+        "heading": ("Half a point for the first case. " if points and s["mode"] == "real" else "") + "Let's walk through it together.",
+        "text": walkthrough(idea, s, case_a, case_b),
+        "key_points": [
+            {"text": "First case: " + case_a["answer"], "had": s["a"]["right"]},
+            {"text": "Second case: " + case_b["answer"], "had": False},
+        ],
     }
-    return settle(s, 0, card)
+    return settle(s, points, card)
+
+
+def state(s):
+    return {
+        "topic": s["items"][0]["topic"],
+        "subtopic": s["subtopic"],
+        "mode": s["mode"],
+        "mode_label": MODES[s["mode"]],
+        "notes_url": NOTES.get(s["subtopic"], ""),
+        "ideas": [i["idea"] for i in s["items"]],
+        "results": s["results"],
+        "index": s["index"],
+        "score": s["score"],
+        "waiting": s["waiting"],
+        "stage": s["stage"],
+        "done": s["stage"] == "done",
+    }
 
 
 # --- Login, through Supabase Auth ------------------------------------------------
@@ -489,7 +560,10 @@ class ChatIn(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
     test_id: int | None = Field(default=None, gt=0)       # none yet means "start one"
     subtopic: str = Field(max_length=100)
+    mode: Literal["practice", "real"] = "real"           # which segment a new test is in
     message: str = Field(min_length=1, max_length=2000)  # long enough to explain, short enough to stop abuse
+    simpler: bool = False                                # the learner pressed "Make it simpler"
+    pasted: bool = False                                 # the answer was pasted into the box, not typed
 
 
 @app.exception_handler(RequestValidationError)
@@ -546,51 +620,54 @@ def chat_route(body: ChatIn, request: Request):
 
     # No test yet: create the row, and its id is how the page refers to this test from now on.
     if body.test_id is None:
-        s = new_test(body.subtopic)
-        row = db.table("tests").insert({"user_id": user["id"], "subtopic": body.subtopic, "state": stored(s)}).execute().data[0]
-        return {"test_id": row["id"], "messages": [intro(s), question(s)], "state": state(s)}
+        s = new_test(body.subtopic, body.mode)
+        row = db.table("tests").insert({"user_id": user["id"], "subtopic": body.subtopic, "mode": body.mode, "state": stored(s)}).execute().data[0]
+        return {"test_id": row["id"], "messages": [intro(s), explain_card(s)], "state": state(s)}
 
     # Otherwise read where this learner was, answer, then write it back.
     s = load_test(db, body.test_id)  # 403 here if the test isn't theirs
-    messages = respond(s, body.message)
+    messages = respond(s, body.message, simpler=body.simpler, pasted=body.pasted)
     for attempt in s["new_attempts"]:
         db.table("attempts").insert({"test_id": body.test_id, **attempt}).execute()
     update = {"state": stored(s)}
-    if s["new_attempts"] and s["index"] >= len(s["pairs"]):
-        update["score"] = percent(s)  # stored as a percentage, which is what colours the map
+    if s["new_attempts"] and s["stage"] == "done":
+        update["score"] = percent(s)  # a percentage; only real-world tests colour the map
         update["completed_at"] = datetime.now(timezone.utc).isoformat()
     db.table("tests").update(update).eq("id", body.test_id).execute()
     return {"test_id": body.test_id, "messages": messages, "state": state(s)}
 
 
-# The map: every topic and subtopic, with this learner's latest and best score on each.
+# The map: every topic and subtopic, with this learner's latest and best real-world score
+# on each, and how many times they've practised it.
 @app.get("/api/home")
 def home_route(request: Request):
     user = current_user(request)
     limit("pages:" + user["id"], PAGES_PER_MINUTE, 60)
     finished = (
-        learner_db(user["token"]).table("tests").select("subtopic, score, completed_at")
+        learner_db(user["token"]).table("tests").select("subtopic, mode, score, completed_at")
         .eq("user_id", user["id"]).not_.is_("completed_at", "null")
         .order("completed_at").execute().data
     )
     scores = {}
     for row in finished:  # oldest first, so the last one seen is the latest
-        mine = scores.setdefault(row["subtopic"], {"latest": None, "best": None, "tests": 0})
-        mine["latest"] = round(row["score"])
-        mine["best"] = max(mine["best"] or 0, round(row["score"]))
-        mine["tests"] += 1
+        mine = scores.setdefault(row["subtopic"], {"latest": None, "best": None, "tests": 0, "practised": 0})
+        if row["mode"] == "practice":
+            mine["practised"] += 1
+        elif row["mode"] == "real":  # tests from before the two segments ("legacy") don't count
+            mine["latest"] = round(row["score"])
+            mine["best"] = max(mine["best"] or 0, round(row["score"]))
+            mine["tests"] += 1
 
     topics = []
     for subtopic in SUBTOPICS:
-        topic = next(p["topic"] for p in PAIRS if p["subtopic"] == subtopic)
-        if not topics or topics[-1]["title"] != topic:
-            topics.append({"title": topic, "subtopics": []})
+        items = ideas_for(subtopic)
+        if not topics or topics[-1]["title"] != items[0]["topic"]:
+            topics.append({"title": items[0]["topic"], "subtopics": []})
         topics[-1]["subtopics"].append({
             "title": subtopic,
-            "concepts": CONCEPTS.get(subtopic, []),
-            "questions": sum(1 for p in PAIRS if p["subtopic"] == subtopic),
+            "ideas": [i["idea"] for i in items],
             "notes_url": NOTES.get(subtopic, ""),
-            **scores.get(subtopic, {"latest": None, "best": None, "tests": 0}),
+            **scores.get(subtopic, {"latest": None, "best": None, "tests": 0, "practised": 0}),
         })
     return {"title": ROOT_TITLE, "email": user.get("email"), "topics": topics}
 

@@ -1,1074 +1,1835 @@
 {
-  "version": 1,
-  "scoring": {
-    "full_pass": 1,
-    "pass_after_follow_up": 0.5,
-    "fail": 0,
-    "rule": "An answer passes when every key point in `required` is present and, if `any_of` is not empty, at least one of those too. Any `fail_if` match fails the answer whatever else it says. A `recitation_flags` phrase used without the mechanism behind it triggers one follow-up instead of a pass."
-  },
-  "pairs": [
+  "version": 2,
+  "how_it_works": "Each idea is checked in the same loop. The learner explains it in their own words; the model labels the explanation own, recited, wrong or unclear and quotes the sentence it means. Then case A, a new situation with one short answer written in advance, which code checks against accept and reject. If case A is right and the explanation was their own reasoning, that's 1 point. Otherwise the model asks one follow-up about the quoted sentence, then case B, a different situation chosen so the common wrong idea gives the wrong answer. Practice uses the practice cases and is never scored. The Real-world test uses the real_world cases and decides the score on the map.",
+  "ideas": [
     {
-      "id": "ui-spec-01",
+      "id": "ui-spec-1",
       "topic": "The First Interface (UI)",
       "subtopic": "Designing a Good Spec",
-      "concept": "Observation",
-      "question": "A classmate's spec opens with: \"Working professionals waste a lot of time on reports, and AI can help.\" Compare it with: \"Every Friday Aarav opens Jira, reads the week's tickets, writes a status report and posts it on Slack. It takes him about 90 minutes.\" Which one is an observation, and what does the first one leave you unable to do?",
-      "key_points": [
-        {"id": "K1", "text": "The second is the observation: a specific, real person's struggle that was actually seen, with what they do and how long it takes."},
-        {"id": "K2", "text": "The first is an assumption about a crowd. With no real person or task in it, you cannot do the job by hand, write a golden pair or check whether the output helped anyone."},
-        {"id": "K3", "text": "A good observation also shows the struggle has no working solution yet, so it is worth building for."}
+      "idea": "Why start from one real person's struggle?",
+      "explain": "Why should an app idea start from watching one real person struggle, instead of a big idea like 'AI for productivity'?",
+      "simpler": "What can you check with one real person that you can't check with a big idea?",
+      "understanding": "With a real person and a real task you can do the job by hand, see what they actually need, and check whether your output helped them. A big idea gives you nothing to check against.",
+      "misconception": "A bigger idea is better because more people could use it.",
+      "recitation_markers": [
+        "user-centric",
+        "solve real problems",
+        "product-market fit",
+        "empathy"
       ],
-      "verifier": {
-        "required": ["K1", "K2"],
-        "any_of": [],
-        "recitation_flags": ["it's more specific", "it's user-centric", "it identifies the pain point"],
-        "fail_if": ["Picks the first statement as the observation", "Says both are equally good observations"]
-      },
-      "source": "Concept summary; Lecture 4 notes (Aarav's Friday report)",
-      "needs_review": true
+      "follow_up_seed": "With 'AI for productivity', how would you know on day one whether your app helped anyone?",
+      "practice": [
+        {
+          "scenario": "Aarav spends 90 minutes every Friday writing a status report. Is that an observation or a big idea?",
+          "answer": "an observation",
+          "accept": [
+            "observation",
+            "observed"
+          ],
+          "reject": [
+            "big idea"
+          ]
+        },
+        {
+          "scenario": "Idea one: 'AI for every office worker.' Idea two: 'Cut Aarav's 90-minute Friday report.' Which can you test with one person this week?",
+          "answer": "the second, Aarav's report",
+          "accept": [
+            "second",
+            "two",
+            "2",
+            "aarav",
+            "report",
+            "friday"
+          ],
+          "reject": [
+            "first",
+            "office worker",
+            "every office"
+          ]
+        }
+      ],
+      "real_world": [
+        {
+          "scenario": "One friend wants 'an app to fix Indian traffic'. Another noticed her mother spends 20 minutes every day finding parking at the market. Which one is an observation?",
+          "answer": "the mother's parking",
+          "accept": [
+            "mother",
+            "parking",
+            "20 minutes",
+            "second"
+          ],
+          "reject": [
+            "traffic",
+            "first"
+          ]
+        },
+        {
+          "scenario": "A startup says, 'Everyone hates paperwork, let's use AI for it.' What are they missing before they can test anything?",
+          "answer": "a real person with a real task",
+          "accept": [
+            "person",
+            "user",
+            "someone",
+            "specific",
+            "observation",
+            "real",
+            "who"
+          ],
+          "reject": [
+            "money",
+            "funding",
+            "investors",
+            "ai model"
+          ]
+        }
+      ],
+      "source": "Aarav Reference Document, Discovery Document tab; Lecture 4 notes"
     },
     {
-      "id": "ui-spec-02",
+      "id": "ui-spec-2",
       "topic": "The First Interface (UI)",
       "subtopic": "Designing a Good Spec",
-      "concept": "Hypothesis",
-      "question": "Your team writes the hypothesis: \"Our app will help early-career people get better at AI.\" A mentor says you can never be proven wrong with that sentence. Why not, and rewrite it so a test with real users could fail it.",
-      "key_points": [
-        {"id": "K1", "text": "There is no number or outcome to check, so any result can be read as success."},
-        {"id": "K2", "text": "A testable hypothesis names an assumed cause and a measurable result with a number, such as: given a workflow diagnosis, 6 of 10 early-career people map one repeated workflow and build an app."},
-        {"id": "K3", "text": "The hypothesis also decides what is worth storing and measuring, because you only store what tests the bet."}
+      "idea": "Why does a hypothesis need a number?",
+      "explain": "Why does a hypothesis need a number that could prove you wrong?",
+      "simpler": "If nothing could prove your idea wrong, how would you ever know it failed?",
+      "understanding": "A number sets the bar before you start, so you can see clearly whether you hit it and learn something either way. Without one, any result can be called a success.",
+      "misconception": "A hypothesis just needs to sound confident and positive.",
+      "recitation_markers": [
+        "make it measurable",
+        "smart goals",
+        "data-driven",
+        "kpi"
       ],
-      "verifier": {
-        "required": ["K1", "K2"],
-        "any_of": [],
-        "recitation_flags": ["it's too vague", "make it SMART", "it needs to be measurable"],
-        "fail_if": ["Rewrite still has no number or observable outcome"]
-      },
-      "source": "Concept summary; Lecture 8 notes (the 6 of 10 bet)",
-      "needs_review": true
+      "follow_up_seed": "Your app 'helps learners'. Ten people try it and three seem happier. Did it pass or fail? How would you decide?",
+      "practice": [
+        {
+          "scenario": "Which one can fail: 'Our app helps analysts' or '6 of 10 analysts build one automation in 2 weeks'?",
+          "answer": "the second",
+          "accept": [
+            "second",
+            "6 of 10",
+            "six",
+            "automation",
+            "2 weeks"
+          ],
+          "reject": [
+            "first",
+            "helps analysts"
+          ]
+        },
+        {
+          "scenario": "Aarav says, 'I'm very sure my app will change careers.' Can that sentence ever be proven wrong?",
+          "answer": "no",
+          "accept": [
+            "no",
+            "never",
+            "cannot",
+            "can't"
+          ],
+          "reject": [
+            "yes"
+          ]
+        }
+      ],
+      "real_world": [
+        {
+          "scenario": "A gym says, 'Members will love our new app.' After a month, 4 of 10 members open it weekly. Did the claim pass or fail?",
+          "answer": "you can't tell",
+          "accept": [
+            "can't tell",
+            "cannot tell",
+            "no way",
+            "unclear",
+            "don't know",
+            "can't say",
+            "depends"
+          ],
+          "reject": [
+            "it passed",
+            "it failed"
+          ]
+        },
+        {
+          "scenario": "A cafe's test: 'At least 30 of 100 customers will order the new coffee.' 22 order it. Pass or fail?",
+          "answer": "fail",
+          "accept": [
+            "fail",
+            "failed"
+          ],
+          "reject": [
+            "pass",
+            "passed"
+          ]
+        }
+      ],
+      "source": "Lecture 8 notes (the 6 of 10 bet); Aarav Reference Document, Discovery Document tab"
     },
     {
-      "id": "ui-spec-03",
-      "topic": "The First Interface (UI)",
-      "subtopic": "Designing a Good Spec",
-      "concept": "Named User",
-      "question": "The diagnose app returned a plan full of Python code. It ran without errors. If your spec said the user was \"working professionals\", would you know this plan was wrong? What changes when the spec says the user is Aarav, a 26-year-old business analyst in Pune?",
-      "key_points": [
-        {"id": "K1", "text": "With a vague crowd as the user there is nothing to judge the output against, so a plan full of code can look fine."},
-        {"id": "K2", "text": "Aarav is a business analyst who cannot read Python yet, so a code-heavy plan is useless to him. A named user makes that failure visible."},
-        {"id": "K3", "text": "It leads to a concrete prompt change: no jargon, one step at a time, the minimum action needed now."}
-      ],
-      "verifier": {
-        "required": ["K1", "K2"],
-        "any_of": [],
-        "recitation_flags": ["know your user", "user persona", "empathy"],
-        "fail_if": ["Says the plan is fine because the code runs"]
-      },
-      "source": "Lecture 5 notes, sections 06 and 14",
-      "needs_review": true
-    },
-    {
-      "id": "ui-spec-04",
-      "topic": "The First Interface (UI)",
-      "subtopic": "Designing a Good Spec",
-      "concept": "Observation",
-      "question": "Aarav says writing client emails is slow. Gmail already drafts emails for him, and he uses it happily. Is \"Aarav writes emails slowly\" a good observation to build on? What would you need to see before it is?",
-      "key_points": [
-        {"id": "K1", "text": "No. A good observation is a struggle with no working solution, and Gmail already solves this one for him."},
-        {"id": "K2", "text": "You would need to see where the existing solution fails him in practice, for example a step Gmail cannot do, before it is worth building."}
-      ],
-      "verifier": {
-        "required": ["K1", "K2"],
-        "any_of": [],
-        "recitation_flags": ["validate the problem", "do market research"],
-        "fail_if": ["Says yes, build it, without addressing the existing solution"]
-      },
-      "source": "Concept summary",
-      "needs_review": true
-    },
-    {
-      "id": "ui-golden-01",
-      "topic": "The First Interface (UI)",
-      "subtopic": "Golden Dataset and Verifiers",
-      "concept": "Golden Pairs",
-      "question": "Your teammate tests the diagnose app by reading each output and saying \"looks good\". What should they compare the output against instead, and where does that come from?",
-      "key_points": [
-        {"id": "K1", "text": "Golden pairs: an ideal input and the ideal output for it."},
-        {"id": "K2", "text": "They are written by doing the job by hand after talking to real users, before you see what the model produces."},
-        {"id": "K3", "text": "\"Looks good\" changes with mood and with who is reading. A golden pair is the same check every time."}
-      ],
-      "verifier": {
-        "required": ["K1", "K2"],
-        "any_of": [],
-        "recitation_flags": ["use test cases", "ground truth"],
-        "fail_if": ["Suggests asking the model whether its output is good"]
-      },
-      "source": "Lecture 5 notes, sections 02 and 11",
-      "needs_review": false
-    },
-    {
-      "id": "ui-golden-02",
-      "topic": "The First Interface (UI)",
-      "subtopic": "Golden Dataset and Verifiers",
-      "concept": "Verifier",
-      "question": "A team's verifier reads: \"The plan is good if Aarav likes it.\" Why is that weak? Write a better one that uses a threshold and a baseline.",
-      "key_points": [
-        {"id": "K1", "text": "A verifier is a written condition you can check. \"Aarav likes it\" is a feeling, can change run to run, and cannot be applied without him."},
-        {"id": "K2", "text": "A better one sets a threshold, for example 8 of 10 golden pairs meet the written condition."},
-        {"id": "K3", "text": "It compares against a baseline, such as the raw model with no prompt or the previous prompt, so you know the change helped."}
-      ],
-      "verifier": {
-        "required": ["K1"],
-        "any_of": ["K2", "K3"],
-        "recitation_flags": ["it's subjective", "it should be objective"],
-        "fail_if": ["New verifier is still a feeling or opinion with no number"]
-      },
-      "source": "Concept summary; Lecture 5 notes, section 02",
-      "needs_review": true
-    },
-    {
-      "id": "ui-golden-03",
+      "id": "ui-golden-1",
       "topic": "The First Interface (UI)",
       "subtopic": "Golden Dataset and Verifiers",
-      "concept": "Verifier",
-      "question": "Bhavani's code was the only one in class that ran, and it returned a plan. It still failed. If \"the code runs\" is not the verifier, what is, and what did checking against it change?",
-      "key_points": [
-        {"id": "K1", "text": "Working is not the same as useful. The verifier checks whether the output helps the user, not whether the code runs."},
-        {"id": "K2", "text": "The plan was full of code that Aarav cannot read, so it failed for him."},
-        {"id": "K3", "text": "The check forced a prompt change: no jargon, one step at a time, the minimum action needed now."}
+      "idea": "Why write the ideal answer first?",
+      "explain": "Why write the ideal answer for a test input before you see what the AI says?",
+      "simpler": "If you read the AI's answer first, what might happen to your idea of a good answer?",
+      "understanding": "Written first, the ideal answer is a fixed bar. Written after, you tend to accept whatever the AI said, so you can't catch it being wrong.",
+      "misconception": "The AI's answer is the best guide to what a good answer looks like.",
+      "recitation_markers": [
+        "ground truth",
+        "benchmark",
+        "best practice",
+        "evaluation"
       ],
-      "verifier": {
-        "required": ["K1", "K2"],
-        "any_of": [],
-        "recitation_flags": ["user value", "user experience matters"],
-        "fail_if": ["Says it passed because it ran"]
-      },
-      "source": "Lecture 5 notes, sections 05, 06 and 14",
-      "needs_review": false
+      "follow_up_seed": "The AI gives a confident but wrong plan, and you write your ideal answer after reading it. What's likely to end up in your ideal answer?",
+      "practice": [
+        {
+          "scenario": "You write the ideal plan for Aarav's Friday report, then test the AI against it. What is that input and ideal answer together called?",
+          "answer": "a golden pair",
+          "accept": [
+            "golden pair",
+            "golden"
+          ],
+          "reject": [
+            "prompt"
+          ]
+        },
+        {
+          "scenario": "You read the AI's plan first, then write your 'ideal' plan. It matches the AI almost word for word. Have you tested anything?",
+          "answer": "no",
+          "accept": [
+            "no",
+            "nothing",
+            "not really"
+          ],
+          "reject": [
+            "yes"
+          ]
+        }
+      ],
+      "real_world": [
+        {
+          "scenario": "A teacher marks an exam. Should she write the answer key before or after reading the students' answers?",
+          "answer": "before",
+          "accept": [
+            "before"
+          ],
+          "reject": [
+            "after"
+          ]
+        },
+        {
+          "scenario": "A food critic decides what 'great biryani' means only after tasting one restaurant's biryani. Can she now judge that restaurant fairly?",
+          "answer": "no",
+          "accept": [
+            "no",
+            "can't",
+            "cannot",
+            "not fair",
+            "biased"
+          ],
+          "reject": [
+            "yes"
+          ]
+        }
+      ],
+      "source": "Lecture 5 notes, section 02 and 11; Concept Check brief (golden pairs)"
     },
     {
-      "id": "ui-golden-04",
+      "id": "ui-golden-2",
       "topic": "The First Interface (UI)",
       "subtopic": "Golden Dataset and Verifiers",
-      "concept": "Test-Driven Development",
-      "question": "You are about to write diagnose(workflow). Your friend opens Cursor and starts prompting for code. What should you write first, and why in plain English rather than code?",
-      "key_points": [
-        {"id": "K1", "text": "First write the input, the expected output and the process in English, including the test the output has to pass."},
-        {"id": "K2", "text": "You cannot write the process for a problem you have not done by hand, and an English test can be checked before any code exists."},
-        {"id": "K3", "text": "The code is then done when it meets that test. You can even mock the model and build the deterministic path from the golden pair first."}
+      "idea": "Why isn't 'it runs' a verifier?",
+      "explain": "Why isn't 'the code runs' or 'it looks good' enough to say your AI app works?",
+      "simpler": "Who decides whether the output helped: the code, or the person using it?",
+      "understanding": "Code can run and still give useless output, and 'looks good' changes with mood. A verifier is a written condition about whether the output helps the user, checked the same way every time.",
+      "misconception": "If there are no errors, the app works.",
+      "recitation_markers": [
+        "quality assurance",
+        "testing is important",
+        "user value"
       ],
-      "verifier": {
-        "required": ["K1", "K2"],
-        "any_of": [],
-        "recitation_flags": ["TDD is best practice", "write tests first"],
-        "fail_if": ["Says to write code first and test later"]
-      },
-      "source": "Concept summary; Lecture 5 notes, section 01; Lecture 7 notes, section 10",
-      "needs_review": true
+      "follow_up_seed": "Aarav can't read Python. What would you write down as the test his plan must pass?",
+      "practice": [
+        {
+          "scenario": "The app runs with no errors and returns a plan full of Python code. Aarav can't read Python. Did the app work for Aarav?",
+          "answer": "no",
+          "accept": [
+            "no",
+            "didn't",
+            "did not",
+            "not for him"
+          ],
+          "reject": [
+            "yes"
+          ]
+        },
+        {
+          "scenario": "Two teammates read the same plan. One says 'looks good', the other says 'looks bad'. Can 'looks good' be your test?",
+          "answer": "no",
+          "accept": [
+            "no",
+            "can't",
+            "cannot"
+          ],
+          "reject": [
+            "yes"
+          ]
+        }
+      ],
+      "real_world": [
+        {
+          "scenario": "A delivery app's route finder never crashes, but sends riders down a closed road every day. Does the route finder work?",
+          "answer": "no",
+          "accept": [
+            "no",
+            "doesn't",
+            "does not"
+          ],
+          "reject": [
+            "yes"
+          ]
+        },
+        {
+          "scenario": "A translation app gives perfect grammar but the wrong meaning. What should its test check: the grammar or the meaning?",
+          "answer": "the meaning",
+          "accept": [
+            "meaning",
+            "sense"
+          ],
+          "reject": [
+            "grammar"
+          ]
+        }
+      ],
+      "source": "Lecture 5 notes, sections 02, 06 and 14"
     },
     {
-      "id": "ui-golden-05",
-      "topic": "The First Interface (UI)",
-      "subtopic": "Golden Dataset and Verifiers",
-      "concept": "Verifier",
-      "question": "In your Concept Check app, after the follow-up you ask the model: \"Does the learner understand now?\" It says yes for 9 out of 10 learners. Why can't you trust that number, and what should decide instead?",
-      "key_points": [
-        {"id": "K1", "text": "A model asked that question tends to say yes, kindly, to almost everyone. It is a soft judge."},
-        {"id": "K2", "text": "A new case with an answer written before the session should decide. Code compares the learner's answer to that answer key."}
-      ],
-      "verifier": {
-        "required": ["K1", "K2"],
-        "any_of": [],
-        "recitation_flags": ["AI can hallucinate", "LLMs are not reliable"],
-        "fail_if": ["Suggests a better prompt for the same yes/no question as the fix"]
-      },
-      "source": "Concept Check hackathon brief (NO-GO rule)",
-      "needs_review": false
-    },
-    {
-      "id": "ui-build-01",
+      "id": "ui-build-1",
       "topic": "The First Interface (UI)",
       "subtopic": "Building the UI",
-      "concept": "Interface Choice",
-      "question": "Pick search, form or chat for each, and say why: (a) Aarav wants to find a past diagnosis that mentioned Jira. (b) A user submits a refund request with an order ID and a reason. (c) Aarav describes a messy workflow he can't quite explain and needs help pinning down.",
-      "key_points": [
-        {"id": "K1", "text": "(a) Search: the thing already exists and he is finding it."},
-        {"id": "K2", "text": "(b) Form: the inputs are known and fixed, so fields capture them exactly."},
-        {"id": "K3", "text": "(c) Chat: the input is open-ended and needs back-and-forth to pin down."}
+      "idea": "Search, form or chat?",
+      "explain": "How do you decide whether your app needs a search box, a form or a chat?",
+      "simpler": "Do you already know exactly what the user will type?",
+      "understanding": "Search finds something that already exists. A form fits when the inputs are known and fixed. A chat fits when the input is open-ended and needs back-and-forth.",
+      "misconception": "Chat is always best because it's the most flexible.",
+      "recitation_markers": [
+        "user-friendly",
+        "depends on the use case",
+        "ux best practices"
       ],
-      "verifier": {
-        "required": ["K1", "K2", "K3"],
-        "any_of": [],
-        "recitation_flags": ["chat is more user-friendly", "depends on the use case"],
-        "fail_if": ["Picks chat for all three"]
-      },
-      "source": "Concept summary",
-      "needs_review": true
+      "follow_up_seed": "Aarav's leave request always needs a start date, an end date and a reason. What would a chat add that three boxes don't?",
+      "practice": [
+        {
+          "scenario": "Aarav wants to find last month's diagnosis that mentioned Jira. Search, form or chat?",
+          "answer": "search",
+          "accept": [
+            "search"
+          ],
+          "reject": [
+            "form",
+            "chat"
+          ]
+        },
+        {
+          "scenario": "Every leave request needs a start date, an end date and a reason, nothing else. Search, form or chat?",
+          "answer": "form",
+          "accept": [
+            "form"
+          ],
+          "reject": [
+            "chat",
+            "search"
+          ]
+        }
+      ],
+      "real_world": [
+        {
+          "scenario": "You want to find a song you heard yesterday by typing part of its name. Search, form or chat?",
+          "answer": "search",
+          "accept": [
+            "search"
+          ],
+          "reject": [
+            "form",
+            "chat"
+          ]
+        },
+        {
+          "scenario": "A credit card application needs name, PAN, income and address. A startup wants to turn it into a chat. Form or chat?",
+          "answer": "form",
+          "accept": [
+            "form"
+          ],
+          "reject": [
+            "chat"
+          ]
+        }
+      ],
+      "source": "Building UI concept list"
     },
     {
-      "id": "ui-build-02",
+      "id": "ui-build-2",
       "topic": "The First Interface (UI)",
       "subtopic": "Building the UI",
-      "concept": "Gradio Library",
-      "question": "Gradio gives you a working chat UI in about four lines of Python. What is it hiding from you, and describe a moment when not knowing that would hurt.",
-      "key_points": [
-        {"id": "K1", "text": "Gradio is a cushion over HTML, CSS and JavaScript: a text area, a button, an output box and a request to the backend."},
-        {"id": "K2", "text": "When something breaks or lands on the wrong machine, such as a key ending up in the browser, you need to know what is underneath to fix it."}
+      "idea": "Why do the job by hand first?",
+      "explain": "Why do the whole job by hand for one real user before writing any code?",
+      "simpler": "What do you learn by doing the job yourself that you can't learn by coding it?",
+      "understanding": "Doing it by hand shows you the real process and what a good output looks like, cheaply, before code locks in your guesses. It also gives you real golden pairs.",
+      "misconception": "Building the app first is faster; you learn by shipping code.",
+      "recitation_markers": [
+        "mvp",
+        "fail fast",
+        "iterate",
+        "lean startup"
       ],
-      "verifier": {
-        "required": ["K1", "K2"],
-        "any_of": [],
-        "recitation_flags": ["it abstracts the frontend", "it's a wrapper"],
-        "fail_if": ["Says Gradio is the backend or calls the model by itself"]
-      },
-      "source": "Lecture 7 notes, step 01",
-      "needs_review": false
+      "follow_up_seed": "You code for three weeks, then Aarav says the plan isn't what he needed. What would one plan sent by WhatsApp have cost you instead?",
+      "practice": [
+        {
+          "scenario": "Before writing code, you write Aarav's plan yourself and send it on WhatsApp. What is this way of testing called?",
+          "answer": "a manual MVP",
+          "accept": [
+            "manual",
+            "mvp",
+            "by hand"
+          ],
+          "reject": [
+            "prototype app"
+          ]
+        },
+        {
+          "scenario": "You spend 3 weeks coding before showing Aarav anything, and he needed something else. Would one hand-made plan have shown you that sooner?",
+          "answer": "yes",
+          "accept": [
+            "yes",
+            "sooner",
+            "faster"
+          ],
+          "reject": [
+            "no"
+          ]
+        }
+      ],
+      "real_world": [
+        {
+          "scenario": "A friend wants to build a tiffin-delivery app. What could she do this week, with no code at all, to test it?",
+          "answer": "take and deliver orders by hand",
+          "accept": [
+            "by hand",
+            "manually",
+            "whatsapp",
+            "phone",
+            "herself",
+            "deliver",
+            "take orders",
+            "call"
+          ],
+          "reject": [
+            "build the app",
+            "write code",
+            "hire developers"
+          ]
+        },
+        {
+          "scenario": "A startup spends 6 months building a fitness app, then learns people only wanted a weekly check-in message. What should they have done first?",
+          "answer": "send the check-ins by hand",
+          "accept": [
+            "by hand",
+            "manually",
+            "whatsapp",
+            "talk",
+            "ask",
+            "check-in",
+            "check in",
+            "message them"
+          ],
+          "reject": [
+            "build",
+            "more features"
+          ]
+        }
+      ],
+      "source": "Lecture 5 notes, section 01; Aarav Reference Document, MVP Plan tab"
     },
     {
-      "id": "ui-build-03",
-      "topic": "The First Interface (UI)",
-      "subtopic": "Building the UI",
-      "concept": "Manual MVP",
-      "question": "Your Gradio chat for Aarav runs and replies with exactly what he typed. The UI works. What is missing, and why can't you just ask an AI to fill it in yet?",
-      "key_points": [
-        {"id": "K1", "text": "Input and output exist but there is no process: the step that turns his workflow into a plan he can use."},
-        {"id": "K2", "text": "You cannot write the process for a problem you have not done by hand. Run the loop manually first to learn what a good output is."}
-      ],
-      "verifier": {
-        "required": ["K1", "K2"],
-        "any_of": [],
-        "recitation_flags": ["it needs a backend", "add an LLM"],
-        "fail_if": ["Says nothing is missing because it runs"]
-      },
-      "source": "Lecture 5 notes, section 01",
-      "needs_review": false
-    },
-    {
-      "id": "ui-build-04",
-      "topic": "The First Interface (UI)",
-      "subtopic": "Building the UI",
-      "concept": "Manual MVP",
-      "question": "Before writing any code, you offer Aarav this: he sends his workflow on WhatsApp and you send a diagnosis back by hand within an hour. Your friend calls it a waste of time. What do you get from doing it by hand that code can't give you yet?",
-      "key_points": [
-        {"id": "K1", "text": "It proves the input, process and output loop is useful to a real person before you build anything."},
-        {"id": "K2", "text": "Each round gives you a real golden pair and shows you the process, which becomes your prompt."},
-        {"id": "K3", "text": "It is cheap to change. Fixing a manual process costs a message, not a rebuild."}
-      ],
-      "verifier": {
-        "required": ["K1", "K2"],
-        "any_of": [],
-        "recitation_flags": ["validate the idea", "MVP means minimum viable product"],
-        "fail_if": ["Agrees it is a waste of time"]
-      },
-      "source": "Concept summary",
-      "needs_review": true
-    },
-    {
-      "id": "api-anatomy-01",
+      "id": "api-anatomy-1",
       "topic": "The Second Interface (API)",
       "subtopic": "Anatomy of an API Request",
-      "concept": "Address",
-      "question": "Aarav's UI sends a request to https://diagnosis.aarav.dev/aarav/diagnosis (singular). The real door is /aarav/diagnoses. The method, key and body are all correct. What comes back? Is the problem in the part that names the machine or the part that names the door?",
-      "key_points": [
-        {"id": "K1", "text": "404 Not Found."},
-        {"id": "K2", "text": "The domain is right, so the machine was reached. The path names a door that doesn't exist."},
-        {"id": "K3", "text": "Fixing the method, key or body won't help, because only the address is wrong."}
+      "idea": "What does one API call carry?",
+      "explain": "What does a request to Groq need to carry? Why can't it skip any of them?",
+      "simpler": "If you posted a letter to a machine, what would you need to put on it?",
+      "understanding": "An address (where it goes), an action (what to do), a key (who's asking) and a package (what's being sent). Each answers something the machine can't guess.",
+      "misconception": "The address is enough; the machine works out the rest.",
+      "recitation_markers": [
+        "url, method, headers and body",
+        "it's the http protocol",
+        "restful"
       ],
-      "verifier": {
-        "required": ["K1", "K2"],
-        "any_of": [],
-        "recitation_flags": ["the URL is wrong", "invalid endpoint"],
-        "fail_if": ["Says 401, 400 or a 5xx", "Says the server is down"]
-      },
-      "source": "Lecture 4 notes",
-      "needs_review": false
+      "follow_up_seed": "Two requests go to the same address. How does the machine know one wants to read and the other wants to delete?",
+      "practice": [
+        {
+          "scenario": "Your request reaches the right address but has no key. What does the machine ask you?",
+          "answer": "who are you",
+          "accept": [
+            "who are you",
+            "who",
+            "key",
+            "401",
+            "unauthorized",
+            "identify"
+          ],
+          "reject": [
+            "404",
+            "500"
+          ]
+        },
+        {
+          "scenario": "Two requests go to the same address, /notes/7. One shows the note, the other deletes it. What's different between them?",
+          "answer": "the action",
+          "accept": [
+            "action",
+            "method",
+            "get",
+            "delete",
+            "verb"
+          ],
+          "reject": [
+            "address",
+            "url"
+          ]
+        }
+      ],
+      "real_world": [
+        {
+          "scenario": "You pay a friend ₹200 on UPI. Which part of that request proves it's really you?",
+          "answer": "the UPI PIN",
+          "accept": [
+            "pin"
+          ],
+          "reject": [
+            "phone number",
+            "upi id",
+            "amount"
+          ]
+        },
+        {
+          "scenario": "You send two UPI requests to the same friend's UPI ID. One pays ₹200, the other asks for ₹200. Same address. What's different?",
+          "answer": "the action",
+          "accept": [
+            "action",
+            "pay",
+            "collect",
+            "type",
+            "what to do"
+          ],
+          "reject": [
+            "upi id",
+            "address",
+            "amount"
+          ]
+        }
+      ],
+      "source": "Lecture 4 notes, the six parts; Lecture 5 notes, section 15"
     },
     {
-      "id": "api-anatomy-02",
+      "id": "api-anatomy-2",
       "topic": "The Second Interface (API)",
       "subtopic": "Anatomy of an API Request",
-      "concept": "Action",
-      "question": "Aarav's /aarav/diagnoses door accepts only CREATE and READ. His UI sends a DELETE there, with the right key. What comes back, and why is the address not the problem?",
-      "key_points": [
-        {"id": "K1", "text": "405 Method Not Allowed."},
-        {"id": "K2", "text": "The door exists. The server just doesn't allow that action at it."},
-        {"id": "K3", "text": "The method tells the server what to do with the thing at the address, so one URL can behave differently for different methods."}
+      "idea": "Why can't the key live in the browser?",
+      "explain": "Why can't the Groq key go in your page's code? What could someone do with it?",
+      "simpler": "Your page is sent to everyone who visits. What does that mean for a key inside it?",
+      "understanding": "The page reaches every visitor's machine, where anyone can read it. A key works for whoever holds it, so they could use it as you and spend your quota or money.",
+      "misconception": "HTTPS, or hiding the key in the code, keeps it safe.",
+      "recitation_markers": [
+        "for security reasons",
+        "hackers can steal it",
+        "keys should be secret",
+        "bad practice"
       ],
-      "verifier": {
-        "required": ["K2"],
-        "any_of": ["K1", "K3"],
-        "recitation_flags": ["wrong HTTP verb", "not RESTful"],
-        "fail_if": ["Says 404 or wrong URL"]
-      },
-      "source": "Lecture 4 notes",
-      "needs_review": false
+      "follow_up_seed": "A stranger copies your key from the page. What could they do with it tomorrow, and who pays?",
+      "practice": [
+        {
+          "scenario": "Your key is in the page's code. Who can see it?",
+          "answer": "anyone who visits",
+          "accept": [
+            "anyone",
+            "everyone",
+            "every visitor",
+            "visitors",
+            "all",
+            "users",
+            "public"
+          ],
+          "reject": [
+            "no one",
+            "nobody",
+            "only me",
+            "just me"
+          ]
+        },
+        {
+          "scenario": "Your site uses HTTPS. Does that stop a visitor from seeing a key that's inside your page?",
+          "answer": "no",
+          "accept": [
+            "no",
+            "doesn't",
+            "does not"
+          ],
+          "reject": [
+            "yes"
+          ]
+        }
+      ],
+      "real_world": [
+        {
+          "scenario": "A food delivery website puts its Google Maps key in its page. A stranger copies it and uses it. Who pays?",
+          "answer": "the food company",
+          "accept": [
+            "food",
+            "company",
+            "website",
+            "owner",
+            "the site",
+            "them"
+          ],
+          "reject": [
+            "stranger",
+            "google"
+          ]
+        },
+        {
+          "scenario": "A website scrambles its key in the page and unscrambles it just before sending. Can a visitor still get the real key?",
+          "answer": "yes",
+          "accept": [
+            "yes"
+          ],
+          "reject": [
+            "no"
+          ]
+        }
+      ],
+      "source": "Lecture 4 Keys guide; Lecture 7 notes, step 01"
     },
     {
-      "id": "api-anatomy-03",
-      "topic": "The Second Interface (API)",
-      "subtopic": "Anatomy of an API Request",
-      "concept": "Key",
-      "question": "A teammate puts the Groq key in the React code so the browser calls Groq directly and skips the backend. It works on their laptop. What can any visitor to the site now do, and why doesn't Groq notice it isn't you?",
-      "key_points": [
-        {"id": "K1", "text": "Anything the page sends, a visitor can read in DevTools or the Network tab, so the key is public."},
-        {"id": "K2", "text": "\"Bearer\" means whoever holds the key gets in. Groq checks the key, not the person."},
-        {"id": "K3", "text": "Others spend your limit (30 a minute, 1,000 a day) and your bill. The fix is to keep the key in a backend environment variable."}
-      ],
-      "verifier": {
-        "required": ["K1", "K2"],
-        "any_of": [],
-        "recitation_flags": ["for security reasons", "bad practice", "hackers can steal it"],
-        "fail_if": ["Suggests hiding or minifying the key in frontend code, or a frontend .env, as the fix"]
-      },
-      "source": "Lecture 4 Keys guide",
-      "needs_review": false
-    },
-    {
-      "id": "api-anatomy-04",
-      "topic": "The Second Interface (API)",
-      "subtopic": "Anatomy of an API Request",
-      "concept": "Package",
-      "question": "Aarav's service expects {\"workflow\": \"...\"}. Your UI sends the body as a plain sentence: \"I open Jira, read the week's tickets...\" What comes back, and why can't the server just read the sentence?",
-      "key_points": [
-        {"id": "K1", "text": "400 Bad Request."},
-        {"id": "K2", "text": "The server doesn't guess the format. Both sides must agree on it: JSON with the named field."},
-        {"id": "K3", "text": "The Content-Type: application/json header tells the server the body is JSON."}
-      ],
-      "verifier": {
-        "required": ["K1", "K2"],
-        "any_of": [],
-        "recitation_flags": ["JSON is the standard", "invalid format"],
-        "fail_if": ["Says 401, 404 or 500"]
-      },
-      "source": "Lecture 4 notes",
-      "needs_review": false
-    },
-    {
-      "id": "api-anatomy-05",
-      "topic": "The Second Interface (API)",
-      "subtopic": "Anatomy of an API Request",
-      "concept": "Address, Action, Key, Package",
-      "question": "Aarav wants his app to email him each new plan using Resend, a service you have never used. Before you read a line of its code, what four things do you need to find out? Give your best guess for each.",
-      "key_points": [
-        {"id": "K1", "text": "Address: the endpoint, for example POST https://api.resend.com/emails."},
-        {"id": "K2", "text": "Action: POST, because sending an email creates something new."},
-        {"id": "K3", "text": "Key: an API key from Resend, sent in the Authorization header from the backend."},
-        {"id": "K4", "text": "Package: a JSON body with from, to, subject and the message."}
-      ],
-      "verifier": {
-        "required": ["K1", "K2", "K3", "K4"],
-        "any_of": [],
-        "recitation_flags": ["read the docs", "use their SDK"],
-        "fail_if": ["Says the key goes in the frontend"]
-      },
-      "source": "Lecture 5 notes, section 15; Lecture 6 notes, section 01",
-      "needs_review": false
-    },
-    {
-      "id": "api-methods-01",
+      "id": "api-methods-1",
       "topic": "The Second Interface (API)",
       "subtopic": "HTTP Methods (CRUD)",
-      "concept": "Create (POST) vs Read (GET)",
-      "question": "A Google search puts your question in the address bar and uses GET. Asking a model on Groq uses POST, with your prompt in the body. A friend says the model call should be a GET, since you're \"just getting an answer\". What's wrong with that?",
-      "key_points": [
-        {"id": "K1", "text": "GET reads what already exists. Google's results already sit in its index, and nothing new is stored."},
-        {"id": "K2", "text": "The model creates a reply that didn't exist before (ask twice and you get two different replies), so it's a Create, which is POST."},
-        {"id": "K3", "text": "The prompt can be long and private, so it goes in the body, not the address."}
+      "idea": "Why is asking the AI a POST?",
+      "explain": "Why is asking the AI a POST, but a Google search a GET?",
+      "simpler": "Does the AI's answer exist before you ask?",
+      "understanding": "GET reads something that already exists and changes nothing. The AI's reply is new each time (ask twice, get two replies), so it's a create: POST.",
+      "misconception": "You're getting an answer back, so it should be a GET.",
+      "recitation_markers": [
+        "post is for sending data",
+        "get is for getting data"
       ],
-      "verifier": {
-        "required": ["K2"],
-        "any_of": ["K1", "K3"],
-        "recitation_flags": ["POST is for sending data, GET is for retrieving"],
-        "fail_if": ["Agrees it should be a GET"]
-      },
-      "source": "Lecture 4 notes",
-      "needs_review": false
+      "follow_up_seed": "Ask the AI the same question twice. Do you get the same reply? What does that say about whether the reply already existed?",
+      "practice": [
+        {
+          "scenario": "Aarav opens the page that lists his old plans. Which action?",
+          "answer": "GET",
+          "accept": [
+            "get",
+            "read"
+          ],
+          "reject": [
+            "post",
+            "put",
+            "patch",
+            "delete"
+          ]
+        },
+        {
+          "scenario": "Aarav asks the AI for a new plan and waits to get it back. Which action?",
+          "answer": "POST",
+          "accept": [
+            "post",
+            "create"
+          ],
+          "reject": [
+            "get",
+            "put",
+            "patch"
+          ]
+        }
+      ],
+      "real_world": [
+        {
+          "scenario": "On Zomato you open your past orders. Which action?",
+          "answer": "GET",
+          "accept": [
+            "get",
+            "read"
+          ],
+          "reject": [
+            "post",
+            "put",
+            "patch",
+            "delete"
+          ]
+        },
+        {
+          "scenario": "On Zomato you place a new order and get back an order number. Which action?",
+          "answer": "POST",
+          "accept": [
+            "post",
+            "create"
+          ],
+          "reject": [
+            "get",
+            "put",
+            "patch"
+          ]
+        }
+      ],
+      "source": "Lecture 4 notes, the CRUD quiz"
     },
     {
-      "id": "api-methods-02",
+      "id": "api-methods-2",
       "topic": "The Second Interface (API)",
       "subtopic": "HTTP Methods (CRUD)",
-      "concept": "Update (PUT or PATCH)",
-      "question": "Workflow 7 has three fields: title, frequency \"weekly\" and steps. Aarav sends {\"frequency\": \"every Friday\"} twice: once as PATCH /workflows/7, once as PUT /workflows/7. What does workflow 7 look like after each request?",
-      "key_points": [
-        {"id": "K1", "text": "After PATCH, only frequency changes. Title and steps stay."},
-        {"id": "K2", "text": "After PUT, the whole workflow is replaced, so title and steps are lost, because the body only had frequency."},
-        {"id": "K3", "text": "Both are Update. PUT needs the full object."}
+      "idea": "Why can PUT wipe what PATCH keeps?",
+      "explain": "Why can PUT wipe out fields that PATCH leaves alone?",
+      "simpler": "One replaces the whole thing, one changes just a part. Which is which?",
+      "understanding": "PUT replaces the whole thing with what you send, so anything you leave out is gone. PATCH changes only the fields you send.",
+      "misconception": "PUT and PATCH are the same: both just update.",
+      "recitation_markers": [
+        "patch is a partial update",
+        "put is idempotent",
+        "both are for updating"
       ],
-      "verifier": {
-        "required": ["K1", "K2"],
-        "any_of": [],
-        "recitation_flags": ["PATCH is a partial update"],
-        "fail_if": ["Says both give the same result"]
-      },
-      "source": "Lecture 4 notes",
-      "needs_review": false
+      "follow_up_seed": "You send PUT with only the title. What happens to the steps you didn't send?",
+      "practice": [
+        {
+          "scenario": "Workflow 7 has a title, a frequency and steps. You PATCH only the frequency. Are the steps still there?",
+          "answer": "yes",
+          "accept": [
+            "yes",
+            "still there",
+            "kept"
+          ],
+          "reject": [
+            "no",
+            "gone"
+          ]
+        },
+        {
+          "scenario": "Same workflow. This time you PUT only the frequency. Are the steps still there?",
+          "answer": "no",
+          "accept": [
+            "no",
+            "gone",
+            "wiped",
+            "deleted",
+            "lost"
+          ],
+          "reject": [
+            "yes",
+            "still there"
+          ]
+        }
+      ],
+      "real_world": [
+        {
+          "scenario": "You change only your profile photo on Instagram. Should the app PATCH or PUT your profile?",
+          "answer": "PATCH",
+          "accept": [
+            "patch"
+          ],
+          "reject": [
+            "put"
+          ]
+        },
+        {
+          "scenario": "An app sends PUT with just your new phone number. What happens to your name and address on the profile?",
+          "answer": "they're wiped",
+          "accept": [
+            "gone",
+            "wiped",
+            "deleted",
+            "removed",
+            "lost",
+            "empty",
+            "erased",
+            "blank"
+          ],
+          "reject": [
+            "stay",
+            "same",
+            "unchanged",
+            "kept"
+          ]
+        }
+      ],
+      "source": "Lecture 4 notes, the CRUD quiz"
     },
     {
-      "id": "api-methods-03",
-      "topic": "The Second Interface (API)",
-      "subtopic": "HTTP Methods (CRUD)",
-      "concept": "Delete (DELETE)",
-      "question": "A teammate builds the Remove button as a link to GET /deleteWorkflow?id=7. It works. Why is DELETE /workflows/7 the better request, and what could go wrong with the GET version?",
-      "key_points": [
-        {"id": "K1", "text": "GET is meant to read what exists and change nothing. Using it to delete breaks that promise."},
-        {"id": "K2", "text": "Anything that follows links or preloads pages, such as a browser, a link preview or a crawler, could send that GET and delete data by accident."},
-        {"id": "K3", "text": "The address should name the thing (/workflows/7) and the method should name the action (DELETE)."}
-      ],
-      "verifier": {
-        "required": ["K1"],
-        "any_of": ["K2", "K3"],
-        "recitation_flags": ["it's not RESTful", "convention"],
-        "fail_if": ["Says both are equally fine because it works"]
-      },
-      "source": "Lecture 4 notes (CRUD rule; REST gave nouns and CRUD)",
-      "needs_review": false
-    },
-    {
-      "id": "api-methods-04",
-      "topic": "The Second Interface (API)",
-      "subtopic": "HTTP Methods (CRUD)",
-      "concept": "Read (GET)",
-      "question": "You paste https://api.groq.com/openai/v1/chat/completions into your browser's address bar and press Enter. It fails. The address is correct. Why can't the address bar make this call, and what do you use instead?",
-      "key_points": [
-        {"id": "K1", "text": "The address bar only sends GET."},
-        {"id": "K2", "text": "This endpoint needs a POST with a JSON body and an Authorization header, and the address bar can't add either."},
-        {"id": "K3", "text": "Use a tool that lets you set the method, headers and body, such as httpie.io/app, or requests.post in Python."}
-      ],
-      "verifier": {
-        "required": ["K1", "K2"],
-        "any_of": [],
-        "recitation_flags": ["browsers can't call APIs"],
-        "fail_if": ["Says the URL is wrong", "Says Groq is down"]
-      },
-      "source": "Lecture 5 notes, section 10",
-      "needs_review": false
-    },
-    {
-      "id": "api-status-01",
-      "topic": "The Second Interface (API)",
-      "subtopic": "Status Codes",
-      "concept": "2xx success",
-      "question": "Before submitting any workflow, Aarav's UI sends GET /aarav/diagnoses and gets 200 OK with []. His teammate says \"the API works but diagnosis is broken\". What actually happened?",
-      "key_points": [
-        {"id": "K1", "text": "200 means the request was understood and fine, not that you got what you wanted."},
-        {"id": "K2", "text": "The list is empty because nothing has been created yet. Read only fetches what already exists."},
-        {"id": "K3", "text": "Aarav needs to Create first (POST), which should return 201 Created."}
-      ],
-      "verifier": {
-        "required": ["K1", "K2"],
-        "any_of": [],
-        "recitation_flags": ["200 means success"],
-        "fail_if": ["Says the server or the diagnosis logic is broken"]
-      },
-      "source": "Lecture 4 notes",
-      "needs_review": false
-    },
-    {
-      "id": "api-status-02",
-      "topic": "The Second Interface (API)",
-      "subtopic": "Status Codes",
-      "concept": "4xx client errors (429)",
-      "question": "Your Groq-backed app worked all morning. At 11:00 every request gets 429 with retry-after: 20. Nothing in your code changed. What happened, and is retrying immediately in a loop a good fix?",
-      "key_points": [
-        {"id": "K1", "text": "Too many requests: the account's rate limit is used up. The limit belongs to the account, not the key."},
-        {"id": "K2", "text": "Wait the retry-after seconds. Retrying immediately just produces more 429s."},
-        {"id": "K3", "text": "If the key is shared or leaked, everyone holding it draws from the same limit."}
-      ],
-      "verifier": {
-        "required": ["K1", "K2"],
-        "any_of": [],
-        "recitation_flags": ["too many requests", "rate limiting"],
-        "fail_if": ["Blames Groq's server or treats it as a 5xx"]
-      },
-      "source": "Lecture 4 Keys guide",
-      "needs_review": false
-    },
-    {
-      "id": "api-status-03",
+      "id": "api-status-1",
       "topic": "The Second Interface (API)",
       "subtopic": "Status Codes",
-      "concept": "5xx server errors",
-      "question": "Your backend calls Groq, and the user sees 500 Internal Server Error from your backend. A teammate starts rewriting the JSON body the frontend sends. Why might that be the wrong place to look, and where do you look first?",
-      "key_points": [
-        {"id": "K1", "text": "A first digit of 5 means a server failed. A bad body would usually come back as 400."},
-        {"id": "K2", "text": "This 500 comes from your own backend, so check its logs and code first: for example a missing GROQ_API_KEY environment variable, or an error from Groq that the backend doesn't handle."},
-        {"id": "K3", "text": "A 4xx is the code that points at what was sent."}
+      "idea": "Whose fault is it?",
+      "explain": "A request fails. How does the first number of the status code tell you where to look?",
+      "simpler": "If the code starts with 4, whose mistake is it? And if it starts with 5?",
+      "understanding": "4xx means something in your request is wrong, so fix what you sent. 5xx means the server failed, so look at the server and its logs.",
+      "misconception": "Any error means their server is broken.",
+      "recitation_markers": [
+        "4xx is a client error",
+        "5xx is a server error"
       ],
-      "verifier": {
-        "required": ["K1", "K2"],
-        "any_of": [],
-        "recitation_flags": ["500 is a server error"],
-        "fail_if": ["Insists the frontend body is the cause"]
-      },
-      "source": "Lecture 4 notes; Lecture 7 notes, section 08",
-      "needs_review": false
+      "follow_up_seed": "You get a 404 and decide to wait an hour for their server to recover. Will waiting fix it?",
+      "practice": [
+        {
+          "scenario": "You get a 404. Do you fix your request, or wait for their server?",
+          "answer": "fix your request",
+          "accept": [
+            "fix",
+            "my request",
+            "mine",
+            "request",
+            "my side"
+          ],
+          "reject": [
+            "wait",
+            "their server"
+          ]
+        },
+        {
+          "scenario": "Groq replies 401. Is Groq down?",
+          "answer": "no",
+          "accept": [
+            "no",
+            "my key",
+            "not down"
+          ],
+          "reject": [
+            "yes"
+          ]
+        }
+      ],
+      "real_world": [
+        {
+          "scenario": "At 10 am during Tatkal booking, IRCTC shows a 503. Your internet works fine. Whose problem is it?",
+          "answer": "IRCTC's",
+          "accept": [
+            "irctc",
+            "theirs",
+            "their",
+            "server"
+          ],
+          "reject": [
+            "mine",
+            "my",
+            "internet"
+          ]
+        },
+        {
+          "scenario": "A shopping app replies 400: 'invalid PIN code'. Is the shop's server broken?",
+          "answer": "no",
+          "accept": [
+            "no",
+            "typo",
+            "my mistake",
+            "mine"
+          ],
+          "reject": [
+            "yes"
+          ]
+        }
+      ],
+      "source": "Lecture 4 notes; Lecture 5 notes, section 08"
     },
     {
-      "id": "api-status-04",
+      "id": "api-status-2",
       "topic": "The Second Interface (API)",
       "subtopic": "Status Codes",
-      "concept": "4xx client errors (401)",
-      "question": "Aarav's key worked yesterday. Today, after he pasted it in a Discord help post, every request gets 401. He keeps resending the same request. What happened, and what should he do, in order?",
-      "key_points": [
-        {"id": "K1", "text": "The key leaked and was revoked (or must be). A bearer key works for anyone who copies it."},
-        {"id": "K2", "text": "Revoke it, create a new one, then update every place it's used. Anything still sending the old key gets 401, which shows what was missed."},
-        {"id": "K3", "text": "Deleting the post comes last, not first. Once a key has been seen, assume it was copied."}
+      "idea": "Why doesn't 200 mean you got what you wanted?",
+      "explain": "Why can a request come back 200 OK and still not give you what you wanted?",
+      "simpler": "Does 200 mean 'you got what you wanted', or 'your request was fine'?",
+      "understanding": "200 means the request was understood and handled. If you asked the wrong thing, or nothing exists yet, you get a correct but empty or unwanted answer.",
+      "misconception": "200 means success, so everything worked.",
+      "recitation_markers": [
+        "200 means success",
+        "200 ok means it worked"
       ],
-      "verifier": {
-        "required": ["K1", "K2"],
-        "any_of": [],
-        "recitation_flags": ["the key expired", "authentication failed"],
-        "fail_if": ["The only fix is deleting the post", "He keeps using the same key"]
-      },
-      "source": "Lecture 4 Keys guide",
-      "needs_review": false
+      "follow_up_seed": "You ask for Aarav's plans before he has made any. The server replies 200. What's in the list?",
+      "practice": [
+        {
+          "scenario": "Aarav asks for his plans before creating any. The reply is 200 with an empty list. Is the server broken?",
+          "answer": "no",
+          "accept": [
+            "no",
+            "nothing exists",
+            "not broken"
+          ],
+          "reject": [
+            "yes",
+            "broken"
+          ]
+        },
+        {
+          "scenario": "Same empty reply. What should Aarav do first to get a plan?",
+          "answer": "create one",
+          "accept": [
+            "create",
+            "post",
+            "submit",
+            "make",
+            "send"
+          ],
+          "reject": [
+            "wait",
+            "retry",
+            "fix the server"
+          ]
+        }
+      ],
+      "real_world": [
+        {
+          "scenario": "You search Swiggy for pizza at 3 am and get an empty list with a 200. Is the app broken?",
+          "answer": "no",
+          "accept": [
+            "no",
+            "closed",
+            "not broken"
+          ],
+          "reject": [
+            "yes",
+            "broken"
+          ]
+        },
+        {
+          "scenario": "Your bank's balance request comes back 200, but for your old, closed account. Did you get what you wanted?",
+          "answer": "no",
+          "accept": [
+            "no",
+            "wrong account"
+          ],
+          "reject": [
+            "yes"
+          ]
+        }
+      ],
+      "source": "Lecture 4 notes, Round Three"
     },
     {
-      "id": "api-status-05",
-      "topic": "The Second Interface (API)",
-      "subtopic": "Status Codes",
-      "concept": "4xx client errors (404)",
-      "question": "You copy Groq's quickstart exactly and get: \"Error 404. The model llama-3.3-70b-versatile does not exist or you do not have access to it.\" Your teammate says Groq's API is down today. What is the code telling you, what is the message telling you, and what do you change?",
-      "key_points": [
-        {"id": "K1", "text": "A 4xx means the mistake is in your request, not Groq's servers. If Groq were down you would expect a 5xx."},
-        {"id": "K2", "text": "The message says what was not found: the model. The code says whose fault it is; the message says what."},
-        {"id": "K3", "text": "Change the model name to one that exists, such as openai/gpt-oss-120b."}
-      ],
-      "verifier": {
-        "required": ["K1", "K2"],
-        "any_of": [],
-        "recitation_flags": ["404 means not found"],
-        "fail_if": ["Agrees Groq is down", "Says the URL or endpoint is wrong"]
-      },
-      "source": "Lecture 5 notes, section 08",
-      "needs_review": false
-    },
-    {
-      "id": "backend-process-01",
+      "id": "be-process-1",
       "topic": "Backend Code and Abstraction",
       "subtopic": "The Process Layer",
-      "concept": "Prompt plus input forms the package",
-      "question": "The content sent to the model is: \"Here is the workflow of an analyst working at an IT company in India. Diagnose and generate a plan to automate this work, or a part of the work.\" followed by Aarav's pasted workflow. Which part do you own, which part changes every request, and when plans come back bad, which part do you work on?",
-      "key_points": [
-        {"id": "K1", "text": "The instruction is yours and stays the same. The workflow is the user's and changes every time."},
-        {"id": "K2", "text": "Both travel together in one content field as the package."},
-        {"id": "K3", "text": "When outputs are bad you improve the instruction (the prompt), judged against the golden pair. It is the valuable part, refined by talking to real users."}
+      "idea": "Why does a backend exist at all?",
+      "explain": "Why does Aarav's app need a backend? Say what would go wrong without one.",
+      "simpler": "What job does the backend do that the page can't?",
+      "understanding": "Some work must run on a machine the user can't see into or change: holding the key, calling the AI, saving data. The page only asks.",
+      "misconception": "A backend is only needed for heavy work.",
+      "recitation_markers": [
+        "separation of concerns",
+        "frontend is ui, backend is logic",
+        "for security",
+        "best practice"
       ],
-      "verifier": {
-        "required": ["K1", "K3"],
-        "any_of": [],
-        "recitation_flags": ["prompt engineering", "better prompts give better results"],
-        "fail_if": ["Says to change the user's workflow text to get better plans"]
-      },
-      "source": "Lecture 5 notes, sections 04 and 11",
-      "needs_review": false
+      "follow_up_seed": "If the page called Groq itself, with the key inside, who else could use that key?",
+      "practice": [
+        {
+          "scenario": "Aarav's page needs a plan from Groq. Which machine should send that request?",
+          "answer": "your server",
+          "accept": [
+            "server",
+            "backend",
+            "my server",
+            "our server",
+            "vercel",
+            "api"
+          ],
+          "reject": [
+            "browser",
+            "page",
+            "frontend",
+            "client"
+          ]
+        },
+        {
+          "scenario": "Aarav's app is tiny and does almost no work. What does it still need a backend to hide?",
+          "answer": "the key",
+          "accept": [
+            "key",
+            "secret",
+            "password"
+          ],
+          "reject": [
+            "nothing"
+          ]
+        }
+      ],
+      "real_world": [
+        {
+          "scenario": "Swiggy gives a discount only to Gold members. Should the app on your phone decide whether you're Gold, or Swiggy's server?",
+          "answer": "the server",
+          "accept": [
+            "server",
+            "swiggy",
+            "backend"
+          ],
+          "reject": [
+            "phone",
+            "the app on"
+          ]
+        },
+        {
+          "scenario": "A tiny quiz app checks your answers. The correct answers sit inside the page. What can a player do?",
+          "answer": "see the answers and cheat",
+          "accept": [
+            "see",
+            "read",
+            "copy",
+            "cheat",
+            "find",
+            "answers"
+          ],
+          "reject": [
+            "nothing"
+          ]
+        }
+      ],
+      "source": "Lecture 6 notes, section 03; Lecture 7 notes, step 01"
     },
     {
-      "id": "backend-process-02",
+      "id": "be-process-2",
       "topic": "Backend Code and Abstraction",
       "subtopic": "The Process Layer",
-      "concept": "Deterministic systems",
-      "question": "Aarav's Diagnosis Service gave the same diagnosis twice for the same workflow. The model on Groq gave two different plans for the same request. Which one is deterministic, and how does that change the way you test each one?",
-      "key_points": [
-        {"id": "K1", "text": "The service is deterministic: same input, same output, every time. The model is probabilistic."},
-        {"id": "K2", "text": "The deterministic part can be checked by rule, comparing exact output. The model's output can't be matched word for word, so it is checked with a written verifier against the golden pair."}
+      "idea": "Why test the AI differently from normal code?",
+      "explain": "Why do you test the AI part of your app differently from normal code?",
+      "simpler": "If you ask the AI the same thing twice, do you get the exact same words?",
+      "understanding": "Normal code gives the same output for the same input, so you can check it exactly. The AI's words change each time, so you check it against a written condition, not an exact match.",
+      "misconception": "The AI is a program, so it always gives the same answer.",
+      "recitation_markers": [
+        "llms are non-deterministic",
+        "temperature",
+        "probabilistic"
       ],
-      "verifier": {
-        "required": ["K1", "K2"],
-        "any_of": [],
-        "recitation_flags": ["LLMs are random", "temperature"],
-        "fail_if": ["Says the model is deterministic", "Says you test both by exact match"]
-      },
-      "source": "Lecture 4 notes, step 7; Lecture 5 notes, section 02",
-      "needs_review": false
+      "follow_up_seed": "You save Monday's AI reply and check that Tuesday's reply matches it word for word. What happens?",
+      "practice": [
+        {
+          "scenario": "Your add(2, 3) function returns 5. You run it again. What does it return?",
+          "answer": "5",
+          "accept": [
+            "5",
+            "five",
+            "same"
+          ],
+          "reject": [
+            "different"
+          ]
+        },
+        {
+          "scenario": "You send Aarav's workflow to the AI twice. Will both plans be word-for-word the same?",
+          "answer": "no",
+          "accept": [
+            "no",
+            "different"
+          ],
+          "reject": [
+            "yes",
+            "same"
+          ]
+        }
+      ],
+      "real_world": [
+        {
+          "scenario": "A calculator app and a chatbot each get the same question twice. Which one should give the exact same words both times?",
+          "answer": "the calculator",
+          "accept": [
+            "calculator"
+          ],
+          "reject": [
+            "chatbot",
+            "both"
+          ]
+        },
+        {
+          "scenario": "A company tests its chatbot by checking each reply matches a saved reply exactly. Most tests fail even when the replies are good. Why?",
+          "answer": "the AI's words change every time",
+          "accept": [
+            "change",
+            "changes",
+            "different",
+            "varies",
+            "vary",
+            "random",
+            "not the same",
+            "every time"
+          ],
+          "reject": [
+            "bug",
+            "broken"
+          ]
+        }
+      ],
+      "source": "Lecture 4 notes, step 7; Lecture 5 notes, section 02"
     },
     {
-      "id": "backend-process-03",
-      "topic": "Backend Code and Abstraction",
-      "subtopic": "The Process Layer",
-      "concept": "Abstraction vs understanding",
-      "question": "Your app uses the Groq SDK, and nowhere in your code do you see a URL or the word POST. One morning every call fails because the model you use was retired. Your teammate pastes the error into ChatGPT again and again. How does knowing what the SDK hides help you fix it faster?",
-      "key_points": [
-        {"id": "K1", "text": "The SDK wraps the address, action, key and package. Hidden machinery does not disappear."},
-        {"id": "K2", "text": "Knowing that, you read the status code and message (404, model not found) and change the model name, instead of guessing."},
-        {"id": "K3", "text": "Each round of pasting errors without understanding adds debt, until the AI can no longer fix what you can't explain."}
-      ],
-      "verifier": {
-        "required": ["K1", "K2"],
-        "any_of": [],
-        "recitation_flags": ["abstraction hides complexity", "SDKs make life easier"],
-        "fail_if": ["Says to switch to another SDK as the fix"]
-      },
-      "source": "Lecture 5 notes, section 12; Lecture 6 notes, section 02",
-      "needs_review": false
-    },
-    {
-      "id": "backend-process-04",
-      "topic": "Backend Code and Abstraction",
-      "subtopic": "The Process Layer",
-      "concept": "Abstraction vs understanding",
-      "question": "You were asked to fill in one line, the process, in a working Gradio template. You paste the task into an AI. The code it returns runs, but it renamed your functions, swapped the interface and added ten parameters nobody asked for. Why is that a red flag, even though it works?",
-      "key_points": [
-        {"id": "K1", "text": "Extra, unrequested structure is the fingerprint of pasting the task into an AI without understanding it."},
-        {"id": "K2", "text": "You can't verify code you don't understand, and every unrequested change is something else that can break."},
-        {"id": "K3", "text": "Ask first: what is the smallest change that makes this work?"}
-      ],
-      "verifier": {
-        "required": ["K1"],
-        "any_of": ["K2", "K3"],
-        "recitation_flags": ["it's bad code", "over-engineering"],
-        "fail_if": ["Says it is fine because it runs"]
-      },
-      "source": "Lecture 5 notes, sections 05 and 07",
-      "needs_review": false
-    },
-    {
-      "id": "backend-raw-01",
+      "id": "be-raw-1",
       "topic": "Backend Code and Abstraction",
       "subtopic": "Raw Requests in Python",
-      "concept": "requests library",
-      "question": "Without writing code, describe what your requests.post call to Groq must contain: what goes in the URL, the headers and the JSON body, and which part of the reply you show Aarav.",
-      "key_points": [
-        {"id": "K1", "text": "URL: the full endpoint, https://api.groq.com/openai/v1/chat/completions, sent with POST."},
-        {"id": "K2", "text": "Headers: Authorization: Bearer with the key read from the environment."},
-        {"id": "K3", "text": "Body: JSON with the model (openai/gpt-oss-120b) and messages, where the content is your prompt plus Aarav's workflow."},
-        {"id": "K4", "text": "From the JSON reply, extract the message content and show only that."}
+      "idea": "Why does the key go in an environment variable?",
+      "explain": "Why does the key go in an environment variable instead of in your code?",
+      "simpler": "Who can read your code once it's on GitHub or on a shared screen?",
+      "understanding": "Code gets shared: GitHub, screenshots, reviews. An environment variable keeps the key outside the code, on the machine that runs it, so sharing the code doesn't share the key.",
+      "misconception": "If the repo is private, a key in the code is fine.",
+      "recitation_markers": [
+        "never hardcode secrets",
+        "use .env",
+        "best practice"
       ],
-      "verifier": {
-        "required": ["K1", "K2", "K3"],
-        "any_of": [],
-        "recitation_flags": ["send a request to the API", "call the endpoint"],
-        "fail_if": ["Puts the key in the body or the URL", "Uses GET"]
-      },
-      "source": "Lecture 5 notes, sections 10, 11 and 13",
-      "needs_review": false
+      "follow_up_seed": "You push code with the key typed into it to a public repo. Who has your key now?",
+      "practice": [
+        {
+          "scenario": "Your code has the key typed in, and you push it to a public GitHub repo. Who can see the key?",
+          "answer": "anyone",
+          "accept": [
+            "anyone",
+            "everyone",
+            "public",
+            "all"
+          ],
+          "reject": [
+            "no one",
+            "nobody",
+            "only me"
+          ]
+        },
+        {
+          "scenario": "The repo is private, but you share your screen in class with the key visible in diagnose.py. Is the key still safe?",
+          "answer": "no",
+          "accept": [
+            "no",
+            "not safe"
+          ],
+          "reject": [
+            "yes"
+          ]
+        }
+      ],
+      "real_world": [
+        {
+          "scenario": "A developer posts a screenshot of his code on LinkedIn with an API key visible. What should he do first?",
+          "answer": "revoke the key",
+          "accept": [
+            "revoke",
+            "delete the key",
+            "new key",
+            "rotate",
+            "cancel the key",
+            "disable"
+          ],
+          "reject": [
+            "delete the post",
+            "delete the screenshot"
+          ]
+        },
+        {
+          "scenario": "On Vercel there's no .env file. Where does your app get GROQ_API_KEY from?",
+          "answer": "Vercel's environment variables",
+          "accept": [
+            "settings",
+            "environment variables",
+            "env vars",
+            "dashboard",
+            "vercel"
+          ],
+          "reject": [
+            "the code",
+            "github"
+          ]
+        }
+      ],
+      "source": "Lecture 4 Keys guide; Lecture 5 notes, section 13; Lecture 7 notes, section 08"
     },
     {
-      "id": "backend-raw-02",
+      "id": "be-raw-2",
       "topic": "Backend Code and Abstraction",
       "subtopic": "Raw Requests in Python",
-      "concept": "Environment variables",
-      "question": "To make it work quickly, you write the key directly in diagnose.py and push the repo to public GitHub for review. What happens next, and how should the code get the key instead?",
-      "key_points": [
-        {"id": "K1", "text": "Anyone who reads the repo now has the key and can use it as you, so it must be revoked and replaced."},
-        {"id": "K2", "text": "The code should read it from an environment variable, such as os.environ[\"GROQ_API_KEY\"], set outside the code (export in the terminal, a .env file that is never committed, or the host's settings)."},
-        {"id": "K3", "text": "Commit a .env.example with the variable names but no values, so others know what to set."}
+      "idea": "What changes when you switch AI provider?",
+      "explain": "You call Groq with plain requests. If you switch to OpenAI, what changes and what stays the same?",
+      "simpler": "Every machine needs an address, an action, a key and a package. Which of those change between companies?",
+      "understanding": "The address, the key and the model name change. The shape stays the same: a POST with a key in the header and a JSON package.",
+      "misconception": "Each AI company needs a completely different way of calling it.",
+      "recitation_markers": [
+        "provider-agnostic",
+        "use an sdk",
+        "abstraction"
       ],
-      "verifier": {
-        "required": ["K1", "K2"],
-        "any_of": [],
-        "recitation_flags": ["never hardcode secrets", "use .env"],
-        "fail_if": ["Says making the repo private later is enough", "Commits the .env file"]
-      },
-      "source": "Lecture 4 Keys guide; Lecture 5 notes, section 13; Lecture 8 notes, section 10",
-      "needs_review": false
+      "follow_up_seed": "Write the four parts of your Groq call. Which of them mention Groq?",
+      "practice": [
+        {
+          "scenario": "You switch from Groq to OpenAI. Does the action change from POST?",
+          "answer": "no",
+          "accept": [
+            "no",
+            "still post"
+          ],
+          "reject": [
+            "yes"
+          ]
+        },
+        {
+          "scenario": "You switch from Groq to OpenAI. Name one thing you must change.",
+          "answer": "the address, the key or the model",
+          "accept": [
+            "address",
+            "url",
+            "endpoint",
+            "key",
+            "model"
+          ],
+          "reject": [
+            "everything",
+            "the method",
+            "post"
+          ]
+        }
+      ],
+      "real_world": [
+        {
+          "scenario": "Your app sends SMS through one company and moves to a cheaper one. What changes: the address and key, or the action and package shape?",
+          "answer": "the address and key",
+          "accept": [
+            "address",
+            "key",
+            "url"
+          ],
+          "reject": [
+            "action",
+            "shape"
+          ]
+        },
+        {
+          "scenario": "A weather app switches to a new weather provider. Does it need to be rewritten from scratch?",
+          "answer": "no",
+          "accept": [
+            "no"
+          ],
+          "reject": [
+            "yes"
+          ]
+        }
+      ],
+      "source": "Lecture 5 notes, section 15"
     },
     {
-      "id": "backend-raw-03",
-      "topic": "Backend Code and Abstraction",
-      "subtopic": "Raw Requests in Python",
-      "concept": "Model integration",
-      "question": "Your mentor asks you to switch Aarav's app from Groq to OpenAI for a day. You call the API with raw requests.post, not an SDK. What do you change, and what stays exactly the same?",
-      "key_points": [
-        {"id": "K1", "text": "Change the address (OpenAI's endpoint), the key (an OpenAI key in its own environment variable) and the model name."},
-        {"id": "K2", "text": "The shape stays the same: POST, an Authorization header, a JSON body with the model and messages. No new package to install."}
-      ],
-      "verifier": {
-        "required": ["K1", "K2"],
-        "any_of": [],
-        "recitation_flags": ["it's provider-agnostic", "just swap the API"],
-        "fail_if": ["Says the whole integration must be rewritten"]
-      },
-      "source": "Lecture 5 notes, section 15",
-      "needs_review": false
-    },
-    {
-      "id": "backend-fastapi-01",
-      "topic": "Backend Code and Abstraction",
-      "subtopic": "FastAPI and Validation",
-      "concept": "FastAPI framework",
-      "question": "diagnose(workflow) works when you run it in your terminal. Now Gradio, running on Aarav's laptop, needs to call it. What do you add, and what are the action, address and package of your new API?",
-      "key_points": [
-        {"id": "K1", "text": "Put the function behind a route with FastAPI: a decorator that names the action and address, such as @app.post(\"/api/diagnose\")."},
-        {"id": "K2", "text": "Package: {\"workflow\": \"...\"} in, {\"plan\": \"...\"} out. The Groq key stays on the server and never goes to Gradio."},
-        {"id": "K3", "text": "Deploy it so it has a URL other machines can reach."}
-      ],
-      "verifier": {
-        "required": ["K1", "K2"],
-        "any_of": [],
-        "recitation_flags": ["create an API", "expose an endpoint"],
-        "fail_if": ["Gives Gradio the Groq key"]
-      },
-      "source": "Lecture 7 notes, steps 02 to 04",
-      "needs_review": false
-    },
-    {
-      "id": "backend-fastapi-02",
-      "topic": "Backend Code and Abstraction",
-      "subtopic": "FastAPI and Validation",
-      "concept": "Pydantic validation",
-      "question": "Your /api/diagnose route promises: send a workflow, get a plan. Someone sends {\"text\": \"...\"} instead, and someone else sends an image. What happens without Pydantic, and what happens with a WorkflowIn model that says workflow must be text?",
-      "key_points": [
-        {"id": "K1", "text": "Without it, your code receives something it doesn't expect and throws, so the caller gets a 500 and you get a crash."},
-        {"id": "K2", "text": "With it, the request is rejected at the door with an error that names the rule broken, before your function runs."},
-        {"id": "K3", "text": "Policy versus enforcement: the route states the rule, Pydantic is the traffic police that enforces it."}
-      ],
-      "verifier": {
-        "required": ["K1", "K2"],
-        "any_of": [],
-        "recitation_flags": ["data validation", "type checking"],
-        "fail_if": ["Says FastAPI accepts it and the model handles it"]
-      },
-      "source": "Lecture 7 notes, step 03",
-      "needs_review": false
-    },
-    {
-      "id": "backend-fastapi-03",
+      "id": "be-fastapi-1",
       "topic": "Backend Code and Abstraction",
       "subtopic": "FastAPI and Validation",
-      "concept": "Server deployment",
-      "question": "After vercel --prod, you POST to https://myapp.vercel.app and get 404. You fix that and get 500, and the Logs tab shows the Groq call failing. A friend suggests pasting the key into the code to make it go away. What is each code telling you, and what is the right fix?",
-      "key_points": [
-        {"id": "K1", "text": "404: the deploy URL alone is not the route. Add /api/diagnose."},
-        {"id": "K2", "text": "500: the right address, but the server failed, because the key isn't on that machine. Add GROQ_API_KEY in Vercel's environment variables with the exact name, then redeploy."},
-        {"id": "K3", "text": "Hardcoding the key would undo the whole point: it would be in the repo for anyone to read."}
+      "idea": "Why check every package that arrives?",
+      "explain": "Why does your API check every incoming package before running any code?",
+      "simpler": "What happens if your code expects text and someone sends a photo?",
+      "understanding": "Your route is open to the whole internet, and people will send wrong or empty packages. Checking first turns them away with a clear error instead of letting your code crash.",
+      "misconception": "Only your own page calls the API, so the input is always right.",
+      "recitation_markers": [
+        "data validation",
+        "type safety",
+        "never trust user input"
       ],
-      "verifier": {
-        "required": ["K1", "K2"],
-        "any_of": [],
-        "recitation_flags": ["check the logs", "configure environment"],
-        "fail_if": ["Agrees to hardcode the key"]
-      },
-      "source": "Lecture 7 notes, section 08",
-      "needs_review": false
+      "follow_up_seed": "Someone sends 'text' where your code expects 'workflow'. Without a check, what does your code do?",
+      "practice": [
+        {
+          "scenario": "Your route needs a workflow as text. Someone sends a 'text' field instead. With Pydantic checking, does your diagnose code run?",
+          "answer": "no",
+          "accept": [
+            "no",
+            "rejected",
+            "error"
+          ],
+          "reject": [
+            "yes"
+          ]
+        },
+        {
+          "scenario": "Your API is live at a public URL. Can people other than your own page send it requests?",
+          "answer": "yes",
+          "accept": [
+            "yes",
+            "anyone"
+          ],
+          "reject": [
+            "no"
+          ]
+        }
+      ],
+      "real_world": [
+        {
+          "scenario": "A train-booking form receives an age of -5. Should the server accept it?",
+          "answer": "no",
+          "accept": [
+            "no",
+            "reject"
+          ],
+          "reject": [
+            "yes"
+          ]
+        },
+        {
+          "scenario": "Someone skips a shopping site's page and sends its API a price of ₹1 for a phone. Who must catch it: the page or the server?",
+          "answer": "the server",
+          "accept": [
+            "server",
+            "backend",
+            "api"
+          ],
+          "reject": [
+            "page",
+            "browser",
+            "frontend"
+          ]
+        }
+      ],
+      "source": "Lecture 7 notes, step 03"
     },
     {
-      "id": "backend-fastapi-04",
+      "id": "be-fastapi-2",
       "topic": "Backend Code and Abstraction",
       "subtopic": "FastAPI and Validation",
-      "concept": "Server deployment",
-      "question": "Your API works perfectly on your laptop, so you send Aarav http://127.0.0.1:8000/api/diagnose. He says it doesn't open. Why, and what does going to production actually change in your code?",
-      "key_points": [
-        {"id": "K1", "text": "127.0.0.1 means \"this machine\". On Aarav's laptop it points at his own machine, where your server isn't running."},
-        {"id": "K2", "text": "Production needs a deployed link. The code stays the same; only the address changes, from the local URL to the vercel.app one."}
+      "idea": "Why does a localhost link only work for you?",
+      "explain": "Why does http://127.0.0.1:8000 work on your laptop but not when you send it to Aarav?",
+      "simpler": "Whose machine does 127.0.0.1 point to?",
+      "understanding": "127.0.0.1 means 'this machine'. On Aarav's laptop it points at his own laptop, where your app isn't running. Others need a deployed address on a machine everyone can reach.",
+      "misconception": "The link is broken, or Aarav's internet is the problem.",
+      "recitation_markers": [
+        "localhost only works locally",
+        "just deploy it"
       ],
-      "verifier": {
-        "required": ["K1", "K2"],
-        "any_of": [],
-        "recitation_flags": ["localhost only works locally"],
-        "fail_if": ["Says his firewall or browser is the problem"]
-      },
-      "source": "Lecture 8 notes, section 02",
-      "needs_review": false
+      "follow_up_seed": "When Aarav opens 127.0.0.1 on his laptop, which machine is his browser asking?",
+      "practice": [
+        {
+          "scenario": "Aarav opens your 127.0.0.1 link on his laptop. Which machine does his browser ask?",
+          "answer": "his own laptop",
+          "accept": [
+            "his",
+            "own",
+            "aarav's",
+            "local"
+          ],
+          "reject": [
+            "mine",
+            "my laptop",
+            "your laptop",
+            "the server"
+          ]
+        },
+        {
+          "scenario": "Aarav moves to faster Wi-Fi and tries the 127.0.0.1 link again. Does it work now?",
+          "answer": "no",
+          "accept": [
+            "no"
+          ],
+          "reject": [
+            "yes"
+          ]
+        }
+      ],
+      "real_world": [
+        {
+          "scenario": "A friend shares 'localhost:3000/my-portfolio' on WhatsApp. You open it on your phone. Whose portfolio do you see?",
+          "answer": "nothing, or whatever your own phone runs",
+          "accept": [
+            "nothing",
+            "none",
+            "no one",
+            "nobody",
+            "can't",
+            "won't",
+            "my own",
+            "mine",
+            "error"
+          ],
+          "reject": [
+            "friend's",
+            "his",
+            "hers"
+          ]
+        },
+        {
+          "scenario": "To show that portfolio to anyone, what does your friend need to do?",
+          "answer": "deploy it",
+          "accept": [
+            "deploy",
+            "host",
+            "vercel",
+            "server",
+            "upload",
+            "online",
+            "public"
+          ],
+          "reject": [
+            "localhost",
+            "send it again"
+          ]
+        }
+      ],
+      "source": "Lecture 8 notes, section 02; Lecture 7 notes, section 03"
     },
     {
-      "id": "backend-fastapi-05",
-      "topic": "Backend Code and Abstraction",
-      "subtopic": "FastAPI and Validation",
-      "concept": "Server deployment",
-      "question": "Why not just run your API on your own laptop and leave it on? Suppose your link gets shared in a 2,000-person cohort channel.",
-      "key_points": [
-        {"id": "K1", "text": "Shut the laptop and the app is gone. One machine's memory and bandwidth can't serve thousands of users, so it falls over."},
-        {"id": "K2", "text": "Running your own server means you own its upkeep and every attack on an open port. Renting (Vercel) hands you a ready machine for what you use."},
-        {"id": "K3", "text": "Renting abstracts where the machine is and how you control it. You still decide what it stores and how it serves the API."}
-      ],
-      "verifier": {
-        "required": ["K1"],
-        "any_of": ["K2", "K3"],
-        "recitation_flags": ["scalability", "the cloud is better"],
-        "fail_if": ["Says a laptop is fine for a public link"]
-      },
-      "source": "Lecture 7 notes, section 03",
-      "needs_review": false
-    },
-    {
-      "id": "storage-where-01",
+      "id": "st-where-1",
       "topic": "Storage and Domain Modelling",
       "subtopic": "Where Storage Lives",
-      "concept": "Server storage",
-      "question": "On Monday Aarav gets a plan. On Tuesday he types: \"I implemented the plan, but hit a problem.\" The call returns 200 and the model replies, but it has no idea which plan he means. Why? Without using the word \"database\", what is the smallest fix?",
-      "key_points": [
-        {"id": "K1", "text": "Every request starts from nothing. The model and the API keep no memory between calls."},
-        {"id": "K2", "text": "Keep a file such as memory.txt. After each reply, write who said what and when, then send it along with the prompt next time so the model reads yesterday first."}
+      "idea": "Why does the app forget without storage?",
+      "explain": "On Tuesday Aarav asks about Monday's plan, and the app has no idea. Why does it forget?",
+      "simpler": "What does the app remember between two messages?",
+      "understanding": "Every request starts from nothing. The AI only sees what this request carries, and nothing kept Monday's plan.",
+      "misconception": "The AI remembers past chats by itself.",
+      "recitation_markers": [
+        "llms are stateless",
+        "it has no memory",
+        "it needs a database"
       ],
-      "verifier": {
-        "required": ["K1", "K2"],
-        "any_of": [],
-        "recitation_flags": ["the model is stateless", "add memory"],
-        "fail_if": ["Blames the 200 or the model being broken"]
-      },
-      "source": "Lecture 6 notes, sections 04 and 05",
-      "needs_review": false
+      "follow_up_seed": "What did Tuesday's request actually contain? What was missing from it?",
+      "practice": [
+        {
+          "scenario": "Aarav's plans are kept in a list in your server's memory. You restart the server. How many plans are left?",
+          "answer": "0",
+          "accept": [
+            "0",
+            "zero",
+            "none",
+            "nothing",
+            "empty",
+            "gone"
+          ],
+          "reject": [
+            "all",
+            "same"
+          ]
+        },
+        {
+          "scenario": "On Tuesday you send the AI only Aarav's new message. How much of Monday's chat does it know?",
+          "answer": "nothing",
+          "accept": [
+            "nothing",
+            "none",
+            "zero",
+            "0",
+            "doesn't know",
+            "does not know"
+          ],
+          "reject": [
+            "everything",
+            "all",
+            "some"
+          ]
+        }
+      ],
+      "real_world": [
+        {
+          "scenario": "You get a new phone, restore WhatsApp, and your old chats appear. Where did they come from?",
+          "answer": "the backup",
+          "accept": [
+            "backup",
+            "google drive",
+            "drive",
+            "icloud",
+            "cloud",
+            "server"
+          ],
+          "reject": [
+            "the phone",
+            "whatsapp remembers"
+          ]
+        },
+        {
+          "scenario": "ChatGPT seems to remember your name in a new chat. Is the model remembering by itself, or is something saved and sent along?",
+          "answer": "something is saved and sent along",
+          "accept": [
+            "saved",
+            "stored",
+            "memory",
+            "sent",
+            "database"
+          ],
+          "reject": [
+            "by itself",
+            "the model remembers"
+          ]
+        }
+      ],
+      "source": "Lecture 6 notes, sections 04 and 05"
     },
     {
-      "id": "storage-where-02",
+      "id": "st-where-2",
       "topic": "Storage and Domain Modelling",
       "subtopic": "Where Storage Lives",
-      "concept": "Client storage",
-      "question": "The plans are small, so a teammate wants to store them in Aarav's browser storage and skip the server. Name two ways this goes wrong.",
-      "key_points": [
-        {"id": "K1", "text": "The user can wipe it, by clearing site data or switching device, and then the app forgets again."},
-        {"id": "K2", "text": "Anyone with access to the browser can read it, so nothing private, and never a key, can live there."}
+      "idea": "How do you decide where a piece lives?",
+      "explain": "How do you decide which machine a part of your app should live on?",
+      "simpler": "Why does the AI model live on Groq's machine and not on Aarav's laptop?",
+      "understanding": "Ask two things: does it fit (size and memory), and who may see or wipe it (privacy)? Too big or private goes to a machine you or someone else controls; small and harmless can live with the user.",
+      "misconception": "Everything should just go on the server.",
+      "recitation_markers": [
+        "it depends",
+        "scalability",
+        "client-server architecture"
       ],
-      "verifier": {
-        "required": ["K1", "K2"],
-        "any_of": [],
-        "recitation_flags": ["it's not secure", "localStorage is bad"],
-        "fail_if": ["Says browser storage is fine for private data"]
-      },
-      "source": "Lecture 6 notes, section 06",
-      "needs_review": false
+      "follow_up_seed": "The model needs 65 GB of memory and Aarav's laptop has 8 GB. Where can it run?",
+      "practice": [
+        {
+          "scenario": "The AI model needs 65 GB of memory. Aarav's laptop has 8 GB. Where does the model run?",
+          "answer": "on Groq's machine",
+          "accept": [
+            "groq",
+            "someone else",
+            "cloud",
+            "provider",
+            "their machine"
+          ],
+          "reject": [
+            "laptop",
+            "browser"
+          ]
+        },
+        {
+          "scenario": "A small spell-checker needs very little memory and nothing private. Can it run in the browser?",
+          "answer": "yes",
+          "accept": [
+            "yes"
+          ],
+          "reject": [
+            "no"
+          ]
+        }
+      ],
+      "real_world": [
+        {
+          "scenario": "Google Maps works offline in an area you've downloaded, but live traffic always needs internet. Where does live traffic have to come from?",
+          "answer": "Google's servers",
+          "accept": [
+            "server",
+            "servers",
+            "google",
+            "internet",
+            "cloud"
+          ],
+          "reject": [
+            "phone",
+            "downloaded"
+          ]
+        },
+        {
+          "scenario": "Your phone's calculator works in airplane mode. Where does it run?",
+          "answer": "on the phone",
+          "accept": [
+            "phone",
+            "device",
+            "locally",
+            "on the phone"
+          ],
+          "reject": [
+            "server",
+            "cloud",
+            "internet"
+          ]
+        }
+      ],
+      "source": "Lecture 6 notes, sections 03 and 06"
     },
     {
-      "id": "storage-where-03",
-      "topic": "Storage and Domain Modelling",
-      "subtopic": "Where Storage Lives",
-      "concept": "File persistence",
-      "question": "Your code saves each plan with open(\"memory.txt\", \"w\").write(line). After three requests the file holds only one line. What went wrong, and what are the steps in English?",
-      "key_points": [
-        {"id": "K1", "text": "\"w\" replaces the whole file each time, so each write erased the earlier lines."},
-        {"id": "K2", "text": "Read what is already there first, add the new line with its timestamp, workflow and plan, then write it all back (or append)."}
-      ],
-      "verifier": {
-        "required": ["K1", "K2"],
-        "any_of": [],
-        "recitation_flags": ["use append mode"],
-        "fail_if": ["Says the file is being deleted by the server"]
-      },
-      "source": "Lecture 8 notes, section 05",
-      "needs_review": false
-    },
-    {
-      "id": "storage-where-04",
-      "topic": "Storage and Domain Modelling",
-      "subtopic": "Where Storage Lives",
-      "concept": "File persistence",
-      "question": "memory.txt works fine when you test alone. At the hackathon, Jagan and Vineet submit at the same minute. One of their plans is missing from the file. What happened, and when does a file stop being enough?",
-      "key_points": [
-        {"id": "K1", "text": "A race condition: both read the file, both wrote it back, and the second write erased the first one's line."},
-        {"id": "K2", "text": "A file is fine for one user, a few writes a day, or read-only data. Once several people write, use a database."}
-      ],
-      "verifier": {
-        "required": ["K1", "K2"],
-        "any_of": [],
-        "recitation_flags": ["files don't scale", "concurrency issues"],
-        "fail_if": ["Blames a network error"]
-      },
-      "source": "Lecture 8 notes, section 06",
-      "needs_review": false
-    },
-    {
-      "id": "storage-where-05",
-      "topic": "Storage and Domain Modelling",
-      "subtopic": "Where Storage Lives",
-      "concept": "File persistence",
-      "question": "The curriculum site serves over 2,000 people from plain files with no database, and it never loses anything. Doesn't that prove memory.txt is fine for your hackathon app too?",
-      "key_points": [
-        {"id": "K1", "text": "No. The curriculum site is read-only: nobody writes, so nothing races and files scale fine."},
-        {"id": "K2", "text": "Your app writes on every request from many users, and writing is the expensive, risky part."}
-      ],
-      "verifier": {
-        "required": ["K1", "K2"],
-        "any_of": [],
-        "recitation_flags": ["it depends on scale"],
-        "fail_if": ["Agrees the file is fine for many writers"]
-      },
-      "source": "Lecture 8 notes, section 06",
-      "needs_review": false
-    },
-    {
-      "id": "storage-model-01",
-      "topic": "Storage and Domain Modelling",
-      "subtopic": "Domain Modelling Concepts",
-      "concept": "Entities and attributes",
-      "question": "For Aarav's app, decide whether each is a thing (its own table) or a fact (a column): a conversation, \"9:12 am\", and the tone of a plan. When could tone stop being a fact?",
-      "key_points": [
-        {"id": "K1", "text": "A conversation is a thing: it can be created, read, updated and deleted on its own, and there can be many."},
-        {"id": "K2", "text": "\"9:12 am\" is a fact. It only says when a message was sent, so it is a column on a message."},
-        {"id": "K3", "text": "Tone is a fact on a plan today. It would become a thing if users could save and reuse named tones. What the product does with it decides."}
-      ],
-      "verifier": {
-        "required": ["K1", "K2"],
-        "any_of": [],
-        "recitation_flags": ["entities are nouns", "attributes describe entities"],
-        "fail_if": ["Makes \"9:12 am\" its own table"]
-      },
-      "source": "Lecture 6 notes, section 09",
-      "needs_review": false
-    },
-    {
-      "id": "storage-model-02",
+      "id": "st-model-1",
       "topic": "Storage and Domain Modelling",
       "subtopic": "Domain Modelling Concepts",
-      "concept": "Relationships (primary and foreign keys)",
-      "question": "Conversations and messages need linking. A teammate adds a message_ids column on conversations. Why won't that work, and where does the link column go?",
-      "key_points": [
-        {"id": "K1", "text": "One conversation has many messages, but each message is in one conversation: one-to-many."},
-        {"id": "K2", "text": "A cell holds one value, so the pointer goes on the many side: conversation_id on messages, holding the conversation's id."}
+      "idea": "Why does the pointer sit on the many side?",
+      "explain": "One conversation has many messages. Why does each message store conversation_id, and not the other way round?",
+      "simpler": "Can one box in a table hold a list of many numbers?",
+      "understanding": "A cell holds one value. Each message belongs to exactly one conversation, so each message can hold one pointer. A conversation can't fit many ids in one cell.",
+      "misconception": "The newer table points to the older one.",
+      "recitation_markers": [
+        "the foreign key goes on the many side",
+        "normalisation",
+        "normalization",
+        "that's the rule"
       ],
-      "verifier": {
-        "required": ["K1", "K2"],
-        "any_of": [],
-        "recitation_flags": ["use a foreign key"],
-        "fail_if": ["Keeps a list of ids in one cell"]
-      },
-      "source": "Lecture 6 notes, sections 09 and 10",
-      "needs_review": false
+      "follow_up_seed": "Conversation 7 has 3 messages. What would one message_ids cell on conversations have to hold?",
+      "practice": [
+        {
+          "scenario": "One user writes many workflows, and each workflow has one owner. Which table gets the pointer?",
+          "answer": "workflows",
+          "accept": [
+            "workflows",
+            "workflow"
+          ],
+          "reject": [
+            "users",
+            "user"
+          ]
+        },
+        {
+          "scenario": "A team is created after its members joined. Each member is in one team, and a team has many members. Which table gets the pointer?",
+          "answer": "members",
+          "accept": [
+            "members",
+            "member",
+            "users",
+            "user",
+            "players"
+          ],
+          "reject": [
+            "teams",
+            "team"
+          ]
+        }
+      ],
+      "real_world": [
+        {
+          "scenario": "On IRCTC, one train has many bookings, and each booking is for one train. Which table holds train_number?",
+          "answer": "bookings",
+          "accept": [
+            "bookings",
+            "booking"
+          ],
+          "reject": [
+            "trains",
+            "train table"
+          ]
+        },
+        {
+          "scenario": "Swiggy creates a delivery batch after the orders were placed. One batch has many orders, and each order is in one batch. Which table gets batch_id?",
+          "answer": "orders",
+          "accept": [
+            "orders",
+            "order"
+          ],
+          "reject": [
+            "batches",
+            "batch table"
+          ]
+        }
+      ],
+      "source": "Lecture 6 notes, sections 09 and 10"
     },
     {
-      "id": "storage-model-03",
+      "id": "st-model-2",
       "topic": "Storage and Domain Modelling",
       "subtopic": "Domain Modelling Concepts",
-      "concept": "Relationships (primary and foreign keys)",
-      "question": "A workflow uses many tools, and Jira shows up in many workflows. You also want to store how often each workflow uses each tool. Where does \"how often\" live?",
-      "key_points": [
-        {"id": "K1", "text": "Both sides are many, so no single column can hold the link. It needs a third table, such as workflow_tools, with one row per pairing."},
-        {"id": "K2", "text": "\"How often\" is a fact about the pairing, so it lives on the workflow_tools row."}
+      "idea": "Why is history a row, not a cell?",
+      "explain": "Why save each new plan as a new row, instead of changing the old one?",
+      "simpler": "What happens to the old value when you change a cell?",
+      "understanding": "Changing a cell overwrites the old value. New rows, each with a time, keep every version.",
+      "misconception": "The database keeps old values by itself.",
+      "recitation_markers": [
+        "for history",
+        "audit trail",
+        "normalisation",
+        "normalization"
       ],
-      "verifier": {
-        "required": ["K1", "K2"],
-        "any_of": [],
-        "recitation_flags": ["many-to-many needs a join table"],
-        "fail_if": ["Puts how often on the tools table or the workflows table"]
-      },
-      "source": "Lecture 6 notes, section 10",
-      "needs_review": false
+      "follow_up_seed": "Workflow 7's plan cell now says plan B. Where is plan A?",
+      "practice": [
+        {
+          "scenario": "A learner takes the same test three times. How many rows should the tests table have for it?",
+          "answer": "3",
+          "accept": [
+            "3",
+            "three"
+          ],
+          "reject": [
+            "1",
+            "one"
+          ]
+        },
+        {
+          "scenario": "A score lives in one cell that's changed after every test. Can you show last week's score?",
+          "answer": "no",
+          "accept": [
+            "no",
+            "can't",
+            "cannot",
+            "overwritten",
+            "lost",
+            "gone"
+          ],
+          "reject": [
+            "yes"
+          ]
+        }
+      ],
+      "real_world": [
+        {
+          "scenario": "Your bank app shows every transaction this year, not just your balance. Is each transaction a new row, or one cell that keeps changing?",
+          "answer": "a new row",
+          "accept": [
+            "row",
+            "rows",
+            "new row"
+          ],
+          "reject": [
+            "cell",
+            "one cell"
+          ]
+        },
+        {
+          "scenario": "A shop keeps 'price' in one cell and changes it every Diwali sale. A customer asks last Diwali's price. Can that table tell them?",
+          "answer": "no",
+          "accept": [
+            "no",
+            "can't",
+            "cannot",
+            "overwritten",
+            "lost"
+          ],
+          "reject": [
+            "yes"
+          ]
+        }
+      ],
+      "source": "Lecture 6 notes, sections 11 and 12"
     },
     {
-      "id": "storage-model-04",
-      "topic": "Storage and Domain Modelling",
-      "subtopic": "Domain Modelling Concepts",
-      "concept": "Entities and attributes",
-      "question": "You store each workflow's plan in a plan column on the workflows table. Aarav asks: \"Show me every plan this workflow ever got, oldest first.\" What goes wrong, and how should it be stored?",
-      "key_points": [
-        {"id": "K1", "text": "Each new plan overwrites the cell, so only the latest survives."},
-        {"id": "K2", "text": "History is a row, not a cell: each diagnosis gets its own row with workflow_id and created_at, so you can list them by workflow in time order."}
-      ],
-      "verifier": {
-        "required": ["K1", "K2"],
-        "any_of": [],
-        "recitation_flags": ["normalise the table"],
-        "fail_if": ["Suggests appending plans into the same cell"]
-      },
-      "source": "Lecture 6 notes, sections 11 and 12",
-      "needs_review": false
-    },
-    {
-      "id": "storage-model-05",
-      "topic": "Storage and Domain Modelling",
-      "subtopic": "Domain Modelling Concepts",
-      "concept": "Relationships (primary and foreign keys)",
-      "question": "To link workflows to people, a teammate stores the user's name on each workflow. Two users named Mira sign up. What breaks, and what should the workflow hold instead?",
-      "key_points": [
-        {"id": "K1", "text": "Names repeat, so you can't tell whose workflow is whose."},
-        {"id": "K2", "text": "Every row gets an id that never repeats (the primary key). The workflow holds user_id, pointing at that id."}
-      ],
-      "verifier": {
-        "required": ["K1", "K2"],
-        "any_of": [],
-        "recitation_flags": ["use a unique identifier"],
-        "fail_if": ["Suggests adding the surname or email as the link"]
-      },
-      "source": "Lecture 6 notes, section 10; Lecture 8 notes, section 04",
-      "needs_review": false
-    },
-    {
-      "id": "storage-db-01",
-      "topic": "Storage and Domain Modelling",
-      "subtopic": "Database Integration",
-      "concept": "PostgreSQL",
-      "question": "Your Modelling Lab board has eight tables: users, conversations, messages, attachments, workflows, diagnoses, tools and workflow_tools. Your bet is that 6 of 10 early-career people map one repeated workflow and build an app. Which tables do you create first for the hackathon, and why not all eight?",
-      "key_points": [
-        {"id": "K1", "text": "Users, workflows and diagnoses: the least that tests the bet."},
-        {"id": "K2", "text": "Store only what answers tomorrow's questions. Storing more costs money and risk, and the rest can wait until users need it."}
-      ],
-      "verifier": {
-        "required": ["K1", "K2"],
-        "any_of": [],
-        "recitation_flags": ["keep it simple", "MVP"],
-        "fail_if": ["Creates all eight up front"]
-      },
-      "source": "Lecture 8 notes, section 04; Lecture 6 notes, section 08",
-      "needs_review": false
-    },
-    {
-      "id": "storage-db-02",
-      "topic": "Storage and Domain Modelling",
-      "subtopic": "Database Integration",
-      "concept": "Supabase",
-      "question": "Supabase gives you a publishable key and a secret key. To save time, a teammate puts the secret key in the Gradio frontend so it can write rows directly. What's the risk, and where does each key belong?",
-      "key_points": [
-        {"id": "K1", "text": "The secret key can read and write everything. In the frontend anyone can copy it and read or delete every user's data."},
-        {"id": "K2", "text": "The secret key lives only on your server, in an environment variable. The publishable key is safe in a browser only once row level security is on."}
-      ],
-      "verifier": {
-        "required": ["K1", "K2"],
-        "any_of": [],
-        "recitation_flags": ["secret keys should be secret"],
-        "fail_if": ["Says the publishable key is always safe in the browser"]
-      },
-      "source": "Lecture 8 notes, section 08",
-      "needs_review": false
-    },
-    {
-      "id": "storage-db-03",
+      "id": "st-db-1",
       "topic": "Storage and Domain Modelling",
       "subtopic": "Database Integration",
-      "concept": "Row Level Security",
-      "question": "Mira signs up for Aarav's app. With the project URL and a key, select * from workflows returns Aarav's workflows too. What is missing, and what exactly does it check?",
-      "key_points": [
-        {"id": "K1", "text": "Row level security: a policy that limits each user to their own rows. Without one, anyone whose query gets through gets everything."},
-        {"id": "K2", "text": "It checks that the logged-in user's id, auth.uid(), matches the row's owner column, such as user_id."},
-        {"id": "K3", "text": "It needs login: each signed-up user gets a UID that the policy checks."}
+      "idea": "Why does a file break with many writers?",
+      "explain": "memory.txt worked for one person. Why does it lose data when two people save at once?",
+      "simpler": "Two people edit the same file and both press save. Whose changes stay?",
+      "understanding": "Both read the whole file, add a line, and write the whole file back, so the second write wipes out the first.",
+      "misconception": "Files break because they get too big.",
+      "recitation_markers": [
+        "files don't scale",
+        "concurrency issues",
+        "just use a database",
+        "race condition"
       ],
-      "verifier": {
-        "required": ["K1", "K2"],
-        "any_of": [],
-        "recitation_flags": ["add authentication", "security policies"],
-        "fail_if": ["Says filtering in the frontend is enough"]
-      },
-      "source": "Lecture 8 notes, section 11",
-      "needs_review": false
+      "follow_up_seed": "Jagan and Vineet both read the file at 10:00, add a line each and write it back. Whose line survives?",
+      "practice": [
+        {
+          "scenario": "The file has 5 lines. Two people each add one line and save at the same moment. How many lines are there now?",
+          "answer": "6",
+          "accept": [
+            "6",
+            "six"
+          ],
+          "reject": [
+            "7",
+            "seven"
+          ]
+        },
+        {
+          "scenario": "A tiny file with 3 lines, and two people save at once. Can a line still go missing?",
+          "answer": "yes",
+          "accept": [
+            "yes"
+          ],
+          "reject": [
+            "no"
+          ]
+        }
+      ],
+      "real_world": [
+        {
+          "scenario": "Two people book the last bus seat in the same second, and the site keeps seats in a plain file. What can go wrong?",
+          "answer": "both get the same seat",
+          "accept": [
+            "both",
+            "same seat",
+            "double",
+            "two people",
+            "twice"
+          ],
+          "reject": [
+            "nothing",
+            "fine"
+          ]
+        },
+        {
+          "scenario": "A news site with a million readers serves articles from plain files and never loses data. Why is it fine?",
+          "answer": "nobody writes; it only reads",
+          "accept": [
+            "read",
+            "reads",
+            "reading",
+            "nobody writes",
+            "no one writes",
+            "read-only",
+            "not writing",
+            "no writes"
+          ],
+          "reject": [
+            "big server",
+            "fast"
+          ]
+        }
+      ],
+      "source": "Lecture 8 notes, section 06"
     },
     {
-      "id": "storage-db-04",
+      "id": "st-db-2",
       "topic": "Storage and Domain Modelling",
       "subtopic": "Database Integration",
-      "concept": "Supabase",
-      "question": "You replace memory.txt with Supabase. Which parts of your code should change, which should not, and what are the address, action, key and package for saving a diagnosis?",
-      "key_points": [
-        {"id": "K1", "text": "Only the storage lines change, becoming an insert and a select. diagnose() and the FastAPI route stay the same, because storage is a separate module."},
-        {"id": "K2", "text": "Address: <project-url>/rest/v1/diagnoses. Action: POST to create. Key: the secret key in the headers, from the server's environment. Package: the row as JSON, such as workflow_id and plan."}
+      "idea": "Why does the database check whose row it is?",
+      "explain": "Why should the database itself check whose row it is, instead of trusting your server code to filter?",
+      "simpler": "If your code forgets one 'only my rows' filter, who could see Aarav's rows?",
+      "understanding": "Code can have bugs or be bypassed. A row level security rule in the database checks every query against the logged-in user, so even a mistaken or injected query only returns that user's own rows.",
+      "misconception": "If the app has a login screen, the data is already safe.",
+      "recitation_markers": [
+        "for security",
+        "access control",
+        "defence in depth",
+        "defense in depth"
       ],
-      "verifier": {
-        "required": ["K1", "K2"],
-        "any_of": [],
-        "recitation_flags": ["use the Supabase SDK", "modular code"],
-        "fail_if": ["Rewrites diagnose() or the route to use the database"]
-      },
-      "source": "Lecture 8 notes, sections 08 and 10",
-      "needs_review": false
-    },
-    {
-      "id": "storage-db-05",
-      "topic": "Storage and Domain Modelling",
-      "subtopic": "Database Integration",
-      "concept": "PostgreSQL",
-      "question": "Your app now has many users writing at once. Why move to Postgres rented from Supabase, rather than a smarter file or a Postgres server you run yourself?",
-      "key_points": [
-        {"id": "K1", "text": "A database is a file system with decades of fixes: safe concurrent writes, backups, and rolling back a bad write."},
-        {"id": "K2", "text": "Your model of things, facts and links maps straight onto SQL tables, columns and foreign keys, which makes it easy to query."},
-        {"id": "K3", "text": "With ten users, renting beats self-hosting: Supabase handles the upkeep and is free at that size."}
+      "follow_up_seed": "Your code forgets the user filter on one route. Without a rule in the database, what does Mira see?",
+      "practice": [
+        {
+          "scenario": "Mira logs in and asks for all tests. With row level security on, whose tests does she get?",
+          "answer": "only her own",
+          "accept": [
+            "her own",
+            "hers",
+            "mira's",
+            "only hers",
+            "her",
+            "own"
+          ],
+          "reject": [
+            "everyone",
+            "all of them",
+            "aarav"
+          ]
+        },
+        {
+          "scenario": "Your page has a login screen, but someone calls your database directly with the publishable key and no login. With row level security on, how many rows do they get?",
+          "answer": "0",
+          "accept": [
+            "0",
+            "zero",
+            "none",
+            "nothing",
+            "no rows"
+          ],
+          "reject": [
+            "all",
+            "every"
+          ]
+        }
       ],
-      "verifier": {
-        "required": ["K1"],
-        "any_of": ["K2", "K3"],
-        "recitation_flags": ["databases are scalable", "Postgres is industry standard"],
-        "fail_if": ["Says a file with locks is just as good for many writers"]
-      },
-      "source": "Lecture 8 notes, sections 06 and 07",
-      "needs_review": false
+      "real_world": [
+        {
+          "scenario": "In a bank app you see only your own account, not your neighbour's. Should that check live in the app screen or in the bank's database?",
+          "answer": "the bank's database",
+          "accept": [
+            "database",
+            "server",
+            "bank",
+            "backend"
+          ],
+          "reject": [
+            "app screen",
+            "screen",
+            "phone"
+          ]
+        },
+        {
+          "scenario": "A school portal hides other students' marks on the page, but sends everyone's marks to the browser. Are the marks private?",
+          "answer": "no",
+          "accept": [
+            "no",
+            "not private"
+          ],
+          "reject": [
+            "yes"
+          ]
+        }
+      ],
+      "source": "Lecture 8 notes, section 11"
     }
   ]
 }
