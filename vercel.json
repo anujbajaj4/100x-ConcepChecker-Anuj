@@ -1,4 +1,5 @@
 {
+  "framework": "fastapi",
   "headers": [
     {
       "source": "/(.*)",

@@ -1,0 +1,12 @@
+# Never upload these to Vercel. The keys go in Vercel's environment variables instead.
+.env
+.env.*
+!.env.example
+.claude
+.venv
+__pycache__
+.DS_Store
+golden_pairs.md
+# Admin scripts that use the secret key: they run on your laptop only.
+rest_check.py
+rls_check.py

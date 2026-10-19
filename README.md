@@ -2,6 +2,19 @@
 
 Concept Check finds where a learner stops understanding and starts reciting. Pick a subtopic from Module 2, answer scenario questions in chat, and get one follow-up on the sentence that sounds recited.
 
+## Live
+
+https://concept-check-anuj.vercel.app
+
+## Deploy
+
+The project is linked to Vercel as `concept-check-anuj`, with the FastAPI preset set in `vercel.json`.
+
+1. Production needs three environment variables in Vercel: `GROQ_API_KEY`, `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY`. The secret Supabase key never goes to Vercel.
+2. Deploy with `vercel --prod`.
+
+`.vercelignore` keeps `.env` and the admin scripts on your laptop. On Vercel, `public/` is served by its CDN, and every `/api` request goes to `app.py`.
+
 ## Run it
 
 1. Install the packages once:

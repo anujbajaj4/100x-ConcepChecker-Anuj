@@ -123,11 +123,13 @@ async function loadHome() {
     if (!r.ok) throw new Error(r.status + ": " + (data.detail || "Something went wrong"));
     const previous = home;
     home = data;
+    showView("home");
     email = data.email;
     $("who").textContent = email;
     $("home-status").textContent = "";
     drawHome(previous);
   } catch (e) {
+    showView("home");
     $("home-status").textContent = e.message.startsWith("Failed") ? "Could not reach the server. Is it running?" : e.message;
   }
 }
@@ -594,5 +596,6 @@ function render(text) {
   }).join("");
 }
 
-// Open the map. If you aren't logged in, the server says 401 and the log-in screen shows instead.
-showHome();
+// Ask the server who you are before showing anything: the map if you're logged in,
+// the log-in screen if it says 401. Nothing flashes up in between.
+loadHome();
