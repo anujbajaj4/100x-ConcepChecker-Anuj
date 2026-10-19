@@ -450,7 +450,42 @@ def start_session(request, response, data):
     return {"email": data["user"]["email"]}
 
 
-app = FastAPI()
+# The interactive API docs at /docs are handy on your laptop, but in production they'd
+# hand every visitor a map of the API. Vercel sets VERCEL=1, so they switch off there.
+DOCS = not os.environ.get("VERCEL")
+app = FastAPI(docs_url="/docs" if DOCS else None, redoc_url=None, openapi_url="/openapi.json" if DOCS else None)
+
+# --- Security headers ----------------------------------------------------------------
+# Instructions to the browser, sent with every response. vercel.json sends the same set
+# for the page on Vercel, where its CDN serves public/ without going through this code.
+SECURITY_HEADERS = {
+    # Only run scripts, styles and fonts from our own address (and Google Fonts), only
+    # fetch from our own API, and never let another site put this page in a frame.
+    "Content-Security-Policy": (
+        "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        "font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; "
+        "object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"
+    ),
+    "Strict-Transport-Security": "max-age=63072000; includeSubDomains",  # HTTPS only, once deployed
+    "X-Content-Type-Options": "nosniff",                                 # a file is what it says it is
+    "X-Frame-Options": "DENY",                                           # older browsers' frame-ancestors
+    "Referrer-Policy": "strict-origin-when-cross-origin",               # don't leak page paths to other sites
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=()",   # this app needs none of them
+}
+
+
+@app.middleware("http")
+async def security_headers(request, call_next):
+    response = await call_next(request)
+    for name, value in SECURITY_HEADERS.items():
+        response.headers.setdefault(name, value)
+    if request.url.path.startswith("/api/"):
+        response.headers["Cache-Control"] = "no-store"  # scores and logins are never cached
+    return response
+
+
+# No CORS middleware on purpose: the browser only lets pages on our own address call
+# this API, so another website can't call it from a visitor's browser.
 
 
 # --- The traffic police ------------------------------------------------------------

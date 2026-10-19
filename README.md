@@ -58,9 +58,12 @@ The model never decides on its own that a learner understands. The answer key is
 
 ## Files
 
-- `public/index.html`: the chat page.
+- `public/index.html` and `public/app.js`: the page and its code.
 - `app.py`: the FastAPI routes, the Groq call and the scoring. Run it with `python3 app.py`.
 - `.env.example`: the variable names to copy into your own `.env`.
+- `schema.sql` and `security.sql`: the tables, then the row level security policies and column rules. Run both in the Supabase SQL Editor.
+- `rest_check.py` and `rls_check.py`: plain-request checks of the tables and of row level security.
+- `vercel.json`: the security headers for the page on Vercel.
 - `prompts.py`: the grader, follow-up and explanation prompts.
 - `golden_pairs.json`: 54 questions with key points and pass rules across 12 subtopics.
 
@@ -75,6 +78,7 @@ Quiz state is kept in the server's memory for now. It resets when the server res
 | Rows | `security.sql` turns on row level security policies: a learner can read, start and update only their own tests and attempts, and nobody can delete. `python3 rls_check.py` proves it with two practice learners. The login token sits in an HttpOnly cookie the page can't read, and quiz state lives on the server. |
 | Packages | Pydantic checks every package before any route code runs: the right fields and types, length limits (a message is 1 to 2,000 characters), and no extra fields. Anything else gets 400 with the rule it broke. `security.sql` adds the same kind of rules inside Postgres, such as points being 0, 0.5 or 1. |
 | Limits | Too many requests get 429 with a Retry-After: 10 log-ins a minute per IP address, 15 answers a minute and 60 map loads a minute per learner, and 10 tests a day per learner (counted in Supabase, so it holds across Vercel machines). Groq's own 429 is passed on with its wait time. The per-minute counters live in each server's memory. |
+| Isolation | The browser only ever calls our own `/api`. Groq and Supabase are reached from the server. There's no CORS, so other websites can't call the API from a visitor's browser. Every response carries security headers (a Content Security Policy that only runs our own `app.js`, no framing, HTTPS only, no sniffing), set in `app.py` and, for the CDN on Vercel, in `vercel.json`. API replies are never cached, and `/docs` is switched off on Vercel. |
 
 ### If a key leaks
 
