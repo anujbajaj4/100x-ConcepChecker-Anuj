@@ -144,7 +144,7 @@
       "follow_up_seed": "Your app 'helps learners'. Ten people try it and three seem happier. Did it pass or fail? How would you decide?",
       "practice": [
         {
-          "scenario": "Which one can fail: 'Our app helps analysts' or '6 of 10 analysts build one automation in 2 weeks'?",
+          "scenario": "Which one could a test with real users prove wrong: 'Our app helps analysts' or '6 of 10 analysts build one automation in 2 weeks'?",
           "answer": "the second",
           "accept": [
             "second",
