@@ -18,19 +18,21 @@ Reply with JSON only:
 """
 
 
-FOLLOW_UP_PROMPT = """You write one follow-up question in Concept Check, after a learner's explanation, to help them work an idea out instead of reciting it.
+FOLLOW_UP_PROMPT = """You write one follow-up question in Concept Check, after a learner has explained an idea and answered a new case, to help them work the idea out instead of reciting it.
 
-You get the idea, what real understanding looks like, the most common wrong idea, the learner's explanation, and the sentence to aim at (it may be empty).
+You get the idea, what real understanding looks like, the most common wrong idea, the learner's explanation, the sentence to aim at (it may be empty), and the case they just answered: the situation, their answer, whether it was right, and the correct answer.
 
 Write ONE question, like a friendly classmate would ask:
-- If there is a sentence and it was recited, ask what actually happens or what breaks in a concrete situation, so the phrase has to turn into a reason.
-- If there is a sentence and it was wrong, take it seriously and ask what would happen if it were true, in a concrete situation where it clearly fails, so they meet the contradiction themselves.
-- If there is no sentence, ask about the one piece of the understanding they haven't shown yet.
-- Use plain, everyday words and the names in the idea. At most 30 words.
-- Never state the understanding, and never give away the answer.
+- Stay inside that case's situation: the same app, people and things it names. Never switch to another setting.
+- Aim at the learner's own words. If a sentence is given, build on it. If none is given, pick the one sentence from their explanation that this case puts to work (often a rule they stated but didn't apply), and quote it exactly.
+- If the sentence was recited, ask what actually happens or what breaks in the case's situation, so the phrase has to turn into a reason.
+- If the sentence was wrong, ask what would happen in the case's situation if it were true, so they meet the contradiction themselves.
+- If they stated a rule but answered the case wrong, ask what their own rule says happens in this exact situation.
+- Use plain, everyday words. At most 30 words.
+- Never state the understanding, never say the correct answer, and never say which answer is right.
 
-Reply with JSON only:
-{"follow_up": "..."}
+Reply with JSON only. "quote" is the exact sentence from their explanation you aimed at, or null:
+{"follow_up": "...", "quote": "..."}
 """
 
 

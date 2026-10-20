@@ -203,14 +203,27 @@ def label(idea, explanation):
 
 
 # AI writes the one follow-up, aimed at the sentence it quoted.
-def write_follow_up(idea, s):
+def write_follow_up(idea, s, case):
+    # The follow-up is written from the case the learner just answered, so it stays in the
+    # same world: Aarav's for practice, the everyday app for the real-world test. The seed is
+    # set in Aarav's world, so only practice gets it.
     user = (
         idea_brief(idea)
         + "\n\nLearner's explanation:\n" + s["explanation"]
         + "\n\nSentence to aim at (" + str(s["label"]) + "): " + (s["quote"] or "none")
-        + "\nA question you could build on: " + idea["follow_up_seed"]
+        + "\n\nThe case they just answered: " + case["scenario"]
+        + "\nTheir answer: " + s["a"]["answer"] + (" (right)" if s["a"]["right"] else " (wrong)")
+        + "\nThe correct answer (never say it): " + case["answer"]
     )
-    return ask_groq(FOLLOW_UP_PROMPT, user).get("follow_up") or idea["follow_up_seed"]
+    if s["mode"] == "practice":
+        user += "\nA question you could build on: " + idea["follow_up_seed"]
+    r = ask_groq(FOLLOW_UP_PROMPT, user)
+    # Keep the quote only if it really is the learner's own words, so we never underline
+    # something they didn't write.
+    quote = r.get("quote")
+    if not s["quote"] and isinstance(quote, str) and quote.strip() and quote.strip().lower() in s["explanation"].lower():
+        s["quote"] = quote.strip()
+    return r.get("follow_up") or idea["follow_up_seed"]
 
 
 # AI walks through the answers, using only the cases and their written answers.
@@ -399,7 +412,7 @@ def respond(s, message, simpler=False, pasted=False):
         if right and s["label"] == "own":
             card = {"kind": "passed", "heading": "You understood it and applied it." + points_phrase(s, 1), "text": "That's the idea working on a case you hadn't seen."}
             return settle(s, 1, card)
-        s["follow_up"] = write_follow_up(idea, s)
+        s["follow_up"] = write_follow_up(idea, s, case_a)
         s["stage"] = "follow_up"
         if s["label"] == "recited":
             heading = "Right answer, but one sentence sounded memorised." if right else "Not quite. Let's look at one sentence you wrote."
@@ -412,7 +425,7 @@ def respond(s, message, simpler=False, pasted=False):
             text = "Your explanation didn't say why yet. Think about this:"
         else:
             heading = "Not quite. Let's work it out a step at a time."
-            text = "Think about this:"
+            text = "Take what you said:" if s["quote"] else "Think about this:"
         return [{"kind": "follow_up", "heading": heading, "text": text, "question": s["follow_up"], "quote": s["quote"]}]
 
     # 3. The follow-up reply. Not scored: it's the retry, kept with the gap it answers.
