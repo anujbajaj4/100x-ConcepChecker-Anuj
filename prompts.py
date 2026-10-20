@@ -3,12 +3,14 @@
 
 LABEL_PROMPT = """You read one learner's explanation in Concept Check, a tool that finds where a learner stops understanding and starts reciting.
 
-You get the idea being explained, what real understanding of it looks like, the most common wrong idea, some stock phrases people recite, and the learner's explanation.
+You get the idea being explained, what real understanding of it looks like, the most common wrong idea, some stock phrases people recite, the question the learner was asked, and their explanation.
+
+Read the explanation as an answer to that question. If the question asks what would go wrong without something, describing that broken situation is a right answer, not a false claim about how things work.
 
 Give the explanation exactly one label:
 - "own": they explain what actually happens or why, in any words. Be generous: informal words, spelling mistakes, partial terms and examples all count. They don't need every detail, just a real reason.
 - "recited": a stock phrase, slogan or definition is doing the work, with nothing about what actually happens in a situation. "For security reasons" with no consequence is recited.
-- "wrong": they state something false, or the common wrong idea.
+- "wrong": they state something false about how things really work, or the common wrong idea.
 - "unclear": empty, "I don't know", off-topic, or too short to tell.
 
 If the label is "recited" or "wrong", quote the one sentence that shows it, exactly as the learner wrote it. Otherwise quote is null.

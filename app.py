@@ -190,10 +190,11 @@ def idea_brief(idea):
 
 
 # AI decides: is the explanation their own reasoning, recited, wrong, or unclear?
-def label(idea, explanation):
+def label(idea, explanation, question):
     user = (
         idea_brief(idea)
         + "\nStock phrases people recite: " + ", ".join(idea["recitation_markers"])
+        + "\n\nThe question they were asked: " + question
         + "\n\nLearner's explanation:\n" + explanation
     )
     r = ask_groq(LABEL_PROMPT, user)
@@ -288,9 +289,9 @@ def load_test(db, test_id):
 def intro(s):
     n, name = len(s["items"]), s["subtopic"]
     if s["mode"] == "practice":
-        text = f"**Practice: {n} ideas on {name}**, set in Aarav's world. Nothing here is scored, so take your time. Explain each idea in your own words first; there's no need for textbook phrasing."
+        text = f"**Practice: {n} ideas on {name}**, set in Aarav's world. Nothing here is scored, so take your time. Explain each idea in your own words first; there's no need for textbook phrasing. Your explanation isn't marked. Each new case is, and you'll see straight away whether you got it."
     else:
-        text = f"**Real-world test: {n} ideas on {name}**, set in apps you use every day. This one counts towards your score. Explain each idea in your own words first, then try it on a new case."
+        text = f"**Real-world test: {n} ideas on {name}**, set in apps you use every day. This one counts towards your score. Explain each idea in your own words first, then try it on a new case. Your explanation isn't marked. Each new case is, and you'll see straight away whether you got it."
     return {"kind": "intro", "text": text}
 
 
@@ -394,13 +395,16 @@ def respond(s, message, simpler=False, pasted=False):
     if s["stage"] == "explain":
         s["explanation"] = (s["explanation"] + "\n" + message).strip()
         s["pasted"] = s["pasted"] or pasted
-        kind, quote = label(idea, s["explanation"])
+        # The labeller sees the question they answered, so "what goes wrong without X" answered
+        # with a description of that broken world isn't mistaken for a false claim.
+        question = idea["explain"] + (" (asked again more simply: " + idea["simpler"] + ")" if s["simpler_used"] else "")
+        kind, quote = label(idea, s["explanation"], question)
         if kind == "unclear" and not s["asked_again"]:
             s["asked_again"] = s["simpler_used"] = True
             return [{"kind": "explain", "label": "Let's try it a simpler way", "text": idea["simpler"], "can_simplify": False}]
         s["label"], s["quote"] = kind, quote
         s["stage"] = "case_a"
-        return [{"kind": "intro", "text": "Thanks. Now try the idea on a new case:"}, case_card(s, "a")]
+        return [{"kind": "intro", "text": "Got it. Your explanation isn't marked right or wrong; the cases are. Here's the first one:"}, case_card(s, "a")]
 
     # 2. Case A: the "before" measure.
     if s["stage"] == "case_a":
@@ -432,7 +436,7 @@ def respond(s, message, simpler=False, pasted=False):
     if s["stage"] == "follow_up":
         s["reply"] = message
         s["stage"] = "case_b"
-        return [{"kind": "intro", "text": "Thanks. Now one more new case:"}, case_card(s, "b")]
+        return [{"kind": "intro", "text": "Got it. Your reply isn't marked either. This next case is, and it shows whether the idea clicked:"}, case_card(s, "b")]
 
     # 4. Case B: the "after" measure, built so the common wrong idea gets it wrong.
     right, how = check(case_b, message)
@@ -445,7 +449,11 @@ def respond(s, message, simpler=False, pasted=False):
         elif a_counts:
             card = {"kind": "passed", "heading": "Now you can explain it, not just recite it." + points_phrase(s, points), "text": "You turned the underlined phrase into a real reason."}
         else:
-            card = {"kind": "half", "heading": "You worked it out." + points_phrase(s, points), "text": f"That's a case you hadn't seen. For the first case, the answer was: {case_a['answer']}."}
+            if s["a"]["right"]:
+                text = "That's a case you hadn't seen. You got the first case too, but the reason you gave first didn't hold up, so this one counts as half."
+            else:
+                text = f"That's a case you hadn't seen. For the first case, the answer was: {case_a['answer']}."
+            card = {"kind": "half", "heading": "You worked it out." + points_phrase(s, points), "text": text}
         return settle(s, points, card)
     points = 0.5 if a_counts else 0
     card = {
